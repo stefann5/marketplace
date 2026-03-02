@@ -681,7 +681,7 @@ erDiagram
     }
 
     SELLER_THEME {
-        uuid seller_id PK_FK
+        uuid seller_id PK
         string preset
         string primary_color
         string accent_color
