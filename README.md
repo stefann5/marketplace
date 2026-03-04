@@ -146,9 +146,9 @@ category (id, name, parent_id, display_order)
 - Checkout: validate stock → create order → decrement stock → confirm
 - Multi-seller cart is split into sub-orders per tenant on checkout
 - Stock management uses optimistic locking (`@Version` column) — no pessimistic database locks
-- Order history for buyers (read-only, status: "Purchased")
+- Order history for buyers (read-only, status: `PURCHASED`)
 - Order list for sellers (filtered by tenant, with fulfilled/unfulfilled toggle)
-- Sellers can mark orders as "Fulfilled" (boolean flag, internal tracking only — buyer does not see this)
+- Sellers can mark orders as `FULFILLED` — tracked via `OrderStatus` enum, not visible to buyers
 - No cancellations, no refunds, no complex status workflows
 - Publishes `ORDER_PLACED` and `ORDER_FULFILLED` events to RabbitMQ
 
@@ -221,9 +221,7 @@ Events stored as documents in MongoDB time-series collections:
 - **Product performance:** Top 10 products by revenue, top 10 by units sold, worst performing products, low stock warnings
 - **Customer behavior:** Product view counts, view-to-purchase conversion rate per product, most searched terms leading to their products, peak shopping hours heatmap (day of week × hour)
 
-Pre-aggregated summary collections may be maintained for frequently accessed metrics to avoid re-aggregating on every dashboard load.
-
-**Database:** MongoDB (time-series collections for events, summary collections for aggregates)
+**Database:** MongoDB (time-series collections for events)
 
 ### 4.6 AI / Chat Service
 
@@ -254,9 +252,20 @@ Pre-aggregated summary collections may be maintained for frequently accessed met
 | Analytics Service | 8085 | MongoDB | RabbitMQ (consumer) |
 | AI/Chat Service | 8086 | MongoDB | RabbitMQ (consumer) |
 
-### 5.2 Deployment
+### 5.2 Object Storage (MinIO)
 
-All services containerized with Docker. A single `docker-compose.yml` defines all services, databases, RabbitMQ, and the internal network. Only the API Gateway exposes a port to the host — all other services communicate on the internal Docker network.
+Images and files are stored in MinIO, running as a container alongside the services.
+
+| Bucket | Access | Usage |
+|---|---|---|
+| `products` | Public | Product images — URL stored directly on the product record |
+| `seller-documents` | Private | Seller registration documents — only the object key is stored; presigned URLs are generated on demand |
+
+Seller profile logos and theme banners are stored in a public bucket (they are displayed on the storefront), so their URLs are stored directly on the record. Only business registration documents are private and accessed via presigned URLs.
+
+### 5.3 Deployment
+
+All services containerized with Docker. A single `docker-compose.yml` defines all services, databases, RabbitMQ, MinIO, and the internal network. Only the API Gateway exposes a port to the host — all other services communicate on the internal Docker network.
 
 ### 5.3 Project Structure
 
