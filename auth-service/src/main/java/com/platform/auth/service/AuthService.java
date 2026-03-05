@@ -37,6 +37,9 @@ public class AuthService {
         if (request.role() == Role.ADMIN) {
             throw new AuthException("Cannot self-register as ADMIN", HttpStatus.FORBIDDEN);
         }
+        if (!request.password().equals(request.confirmPassword())) {
+            throw new AuthException("Passwords do not match", HttpStatus.BAD_REQUEST);
+        }
         if (userRepository.existsByEmail(request.email())) {
             throw new AuthException("Email already registered", HttpStatus.CONFLICT);
         }
