@@ -1,0 +1,47 @@
+package com.platform.auth.entity;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.platform.auth.enums.Role;
+import com.platform.auth.enums.SellerStatus;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+@Entity
+@Table(name = "users")
+@Getter
+@Setter
+@NoArgsConstructor
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+
+    @Column(unique = true, nullable = false)
+    private String email;
+
+    @JsonIgnore
+    @Column(nullable = false)
+    private String passwordHash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role;
+
+    private UUID tenantId;
+
+    @Enumerated(EnumType.STRING)
+    private SellerStatus sellerStatus;
+
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+}
