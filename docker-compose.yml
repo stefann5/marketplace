@@ -9,6 +9,35 @@ services:
     networks:
       - internal
 
+  catalog-service:
+    build: ./catalog-service
+    environment:
+      DB_URL: jdbc:postgresql://host.docker.internal:5432/catalog_db
+      DB_USER: postgres
+      DB_PASS: admin
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: product-images
+    depends_on:
+      - minio
+    networks:
+      - internal
+
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - internal
+
   api-gateway:
     build: ./api-gateway
     ports:
@@ -23,8 +52,12 @@ services:
       AI_CHAT_SERVICE_URL: http://ai-chat-service:8086
     depends_on:
       - auth-service
+      - catalog-service
     networks:
       - internal
+
+volumes:
+  minio-data:
 
 networks:
   internal:
