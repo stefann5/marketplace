@@ -55,6 +55,11 @@ public class AuthService {
         }
 
         userRepository.save(user);
+
+        if (user.getRole() == Role.SELLER) {
+            return JwtResponse.of(null, null, user.getSellerStatus());
+        }
+
         return issueTokenPair(user);
     }
 
@@ -65,6 +70,13 @@ public class AuthService {
 
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
             throw new AuthException("Invalid credentials");
+        }
+
+        if (user.getRole() == Role.SELLER && user.getSellerStatus() == SellerStatus.PENDING) {
+            throw new AuthException("Your seller account is pending admin approval", HttpStatus.FORBIDDEN);
+        }
+        if (user.getRole() == Role.SELLER && user.getSellerStatus() == SellerStatus.REJECTED) {
+            throw new AuthException("Your seller account has been rejected", HttpStatus.FORBIDDEN);
         }
 
         return issueTokenPair(user);

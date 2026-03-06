@@ -1,0 +1,19 @@
+target/
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+*.iws
+.vscode/
+
+# Environment
+.env
+application-local.yml
+application-local.yaml
+
+# Logs
+logs/
+*.log
