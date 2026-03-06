@@ -64,13 +64,27 @@ export class RegisterComponent {
     const { email, password, confirmPassword, role } = this.registerForm.value;
 
     this.authService.register(email, password, confirmPassword, role).subscribe({
-      next: () => this.router.navigate(['/']),
+      next: (res) => {
+        if (res.sellerStatus === 'PENDING') {
+          this.loading = false;
+          this.messageService.add({
+            severity: 'info',
+            summary: 'Account Created',
+            detail: 'Your seller account is pending admin approval. You can log in once approved.',
+            life: 5000
+          });
+          setTimeout(() => this.router.navigate(['/login']), 3000);
+        } else {
+          this.authService.storeTokens(res);
+          this.router.navigate(['/']);
+        }
+      },
       error: (err) => {
         this.loading = false;
         this.messageService.add({
           severity: 'error',
           summary: 'Registration Failed',
-          detail: err.error?.message || 'Could not create account.'
+          detail: err.error?.error || 'Could not create account.'
         });
       }
     });

@@ -24,9 +24,7 @@ export class AuthService {
   }
 
   register(email: string, password: string, confirmPassword: string, role: string): Observable<JwtResponse> {
-    return this.http.post<JwtResponse>(`${this.apiUrl}/register`, { email, password, confirmPassword, role }).pipe(
-      tap(res => this.storeTokens(res))
-    );
+    return this.http.post<JwtResponse>(`${this.apiUrl}/register`, { email, password, confirmPassword, role });
   }
 
   refresh(): Observable<JwtResponse> {
@@ -54,8 +52,10 @@ export class AuthService {
     return !!this.getAccessToken();
   }
 
-  private storeTokens(res: JwtResponse): void {
-    localStorage.setItem('accessToken', res.accessToken);
-    localStorage.setItem('refreshToken', res.refreshToken);
+  storeTokens(res: JwtResponse): void {
+    if (res.accessToken && res.refreshToken) {
+      localStorage.setItem('accessToken', res.accessToken);
+      localStorage.setItem('refreshToken', res.refreshToken);
+    }
   }
 }

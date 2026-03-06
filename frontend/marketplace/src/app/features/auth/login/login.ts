@@ -55,7 +55,7 @@ export class LoginComponent {
         this.messageService.add({
           severity: 'error',
           summary: 'Login Failed',
-          detail: err.error?.message || 'Invalid email or password.'
+          detail: err.error?.error || 'Invalid email or password.'
         });
       }
     });
