@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: auth_db
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  auth-service:
+    build: ./auth-service
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/auth_db
+      DB_USER: postgres
+      DB_PASS: admin
+      JWT_SECRET: dev-secret-key-minimum-256-bits-long-replace-in-production-env
+    depends_on:
+      - postgres
+    networks:
+      - internal
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      JWT_SECRET: dev-secret-key-minimum-256-bits-long-replace-in-production-env
+      AUTH_SERVICE_URL: http://auth-service:8081
+      CATALOG_SERVICE_URL: http://catalog-service:8082
+      ORDER_SERVICE_URL: http://order-service:8083
+      SELLER_SERVICE_URL: http://seller-service:8084
+      ANALYTICS_SERVICE_URL: http://analytics-service:8085
+      AI_CHAT_SERVICE_URL: http://ai-chat-service:8086
+    depends_on:
+      - auth-service
+    networks:
+      - internal
+
+volumes:
+  postgres-data:
+
+networks:
+  internal:
