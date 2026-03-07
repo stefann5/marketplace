@@ -1,0 +1,57 @@
+<p-toast />
+<p-confirmdialog />
+
+<div class="surface-ground min-h-screen p-4">
+  <div class="max-w-80rem mx-auto">
+    <div class="flex justify-content-between align-items-center mb-4">
+      <h2 class="text-3xl font-bold text-color m-0">My Products</h2>
+      <p-button label="Add Product" icon="pi pi-plus" (onClick)="addProduct()" />
+    </div>
+
+    <div class="surface-card rounded-lg">
+      <p-table [value]="products" [paginator]="true" [rows]="rows" [totalRecords]="totalRecords"
+               [lazy]="true" (onLazyLoad)="onPageChange($event)" [loading]="loading"
+               [tableStyle]="{'min-width': '50rem'}">
+        <ng-template #header>
+          <tr>
+            <th style="width: 80px">Image</th>
+            <th>Name</th>
+            <th style="width: 120px">Price</th>
+            <th style="width: 100px">Stock</th>
+            <th style="width: 140px">Actions</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-product>
+          <tr>
+            <td>
+              @if (product.imageUrl) {
+                <img [src]="product.imageUrl" [alt]="product.name" width="50" height="50"
+                     style="object-fit: cover; border-radius: 6px" />
+              } @else {
+                <div class="flex align-items-center justify-content-center" style="width: 50px; height: 50px; border-radius: 6px; background: var(--surface-100)">
+                  <i class="pi pi-image text-color-secondary"></i>
+                </div>
+              }
+            </td>
+            <td class="font-semibold">{{ product.name }}</td>
+            <td>{{ product.price | currency:'USD' }}</td>
+            <td>{{ product.stock }}</td>
+            <td>
+              <div class="flex gap-2">
+                <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" (onClick)="editProduct(product.id)" />
+                <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" (onClick)="confirmDelete($event, product)" />
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="5" class="text-center p-4 text-color-secondary">
+              No products yet. Click "Add Product" to create your first listing.
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</div>
