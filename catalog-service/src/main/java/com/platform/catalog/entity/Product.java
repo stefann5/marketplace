@@ -7,6 +7,8 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -40,7 +42,9 @@ public class Product {
 
     private UUID categoryId;
 
-    private String imageUrl;
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("displayOrder")
+    private List<ProductImage> images = new ArrayList<>();
 
     @Column(nullable = false)
     private double averageRating = 0;

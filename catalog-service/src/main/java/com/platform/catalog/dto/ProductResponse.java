@@ -1,9 +1,11 @@
 package com.platform.catalog.dto;
 
 import com.platform.catalog.entity.Product;
+import com.platform.catalog.entity.ProductImage;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 public record ProductResponse(
@@ -14,7 +16,7 @@ public record ProductResponse(
         BigDecimal price,
         int stock,
         UUID categoryId,
-        String imageUrl,
+        List<String> imageUrls,
         double averageRating,
         int reviewCount,
         int purchaseCount,
@@ -22,6 +24,9 @@ public record ProductResponse(
         LocalDateTime updatedAt
 ) {
     public static ProductResponse from(Product p) {
+        List<String> urls = p.getImages().stream()
+                .map(ProductImage::getImageUrl)
+                .toList();
         return new ProductResponse(
                 p.getId(),
                 p.getTenantId(),
@@ -30,7 +35,7 @@ public record ProductResponse(
                 p.getPrice(),
                 p.getStock(),
                 p.getCategoryId(),
-                p.getImageUrl(),
+                urls,
                 p.getAverageRating(),
                 p.getReviewCount(),
                 p.getPurchaseCount(),

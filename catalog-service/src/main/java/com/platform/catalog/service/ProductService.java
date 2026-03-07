@@ -3,7 +3,9 @@ package com.platform.catalog.service;
 import com.platform.catalog.dto.ProductRequest;
 import com.platform.catalog.dto.ProductResponse;
 import com.platform.catalog.entity.Product;
+import com.platform.catalog.entity.ProductImage;
 import com.platform.catalog.exception.CatalogException;
+import com.platform.catalog.repository.ProductImageRepository;
 import com.platform.catalog.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -20,6 +23,7 @@ import java.util.UUID;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final ProductImageRepository productImageRepository;
     private final MinioService minioService;
 
     @Transactional(readOnly = true)
@@ -59,18 +63,41 @@ public class ProductService {
     @Transactional
     public void deleteProduct(UUID id, UUID tenantId) {
         Product product = getOwnedProduct(id, tenantId);
-        minioService.deleteImage(product.getImageUrl());
+        minioService.deleteAllProductImages(id);
         productRepository.delete(product);
     }
 
     @Transactional
-    public ProductResponse uploadImage(UUID id, UUID tenantId, MultipartFile file) {
+    public ProductResponse uploadImages(UUID id, UUID tenantId, List<MultipartFile> files) {
         Product product = getOwnedProduct(id, tenantId);
-        if (product.getImageUrl() != null) {
-            minioService.deleteImage(product.getImageUrl());
+        int currentMax = product.getImages().stream()
+                .mapToInt(ProductImage::getDisplayOrder)
+                .max()
+                .orElse(-1);
+
+        for (MultipartFile file : files) {
+            String url = minioService.uploadImage(id, file);
+            ProductImage image = new ProductImage();
+            image.setProduct(product);
+            image.setImageUrl(url);
+            image.setDisplayOrder(++currentMax);
+            product.getImages().add(image);
         }
-        String url = minioService.uploadImage(id, file);
-        product.setImageUrl(url);
+
+        productRepository.save(product);
+        return ProductResponse.from(product);
+    }
+
+    @Transactional
+    public ProductResponse deleteImage(UUID productId, UUID tenantId, UUID imageId) {
+        Product product = getOwnedProduct(productId, tenantId);
+        ProductImage image = product.getImages().stream()
+                .filter(img -> img.getId().equals(imageId))
+                .findFirst()
+                .orElseThrow(() -> new CatalogException("Image not found", HttpStatus.NOT_FOUND));
+
+        minioService.deleteImage(image.getImageUrl());
+        product.getImages().remove(image);
         productRepository.save(product);
         return ProductResponse.from(product);
     }

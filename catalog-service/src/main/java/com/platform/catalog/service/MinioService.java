@@ -1,7 +1,7 @@
 package com.platform.catalog.service;
 
 import io.minio.*;
-import io.minio.http.Method;
+import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -83,6 +83,26 @@ public class MinioService {
                     RemoveObjectArgs.builder().bucket(bucketName).object(objectName).build());
         } catch (Exception e) {
             throw new RuntimeException("Failed to delete image", e);
+        }
+    }
+
+    public void deleteAllProductImages(UUID productId) {
+        try {
+            Iterable<Result<Item>> objects = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(bucketName)
+                            .prefix(productId + "/")
+                            .recursive(true)
+                            .build());
+            for (Result<Item> result : objects) {
+                minioClient.removeObject(
+                        RemoveObjectArgs.builder()
+                                .bucket(bucketName)
+                                .object(result.get().objectName())
+                                .build());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to delete product images", e);
         }
     }
 

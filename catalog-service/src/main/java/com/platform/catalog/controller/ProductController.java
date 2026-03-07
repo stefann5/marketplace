@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -65,11 +66,19 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping(value = "/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ProductResponse> uploadImage(
+    @PostMapping(value = "/{id}/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ProductResponse> uploadImages(
             @PathVariable UUID id,
             @RequestHeader("X-Tenant-Id") UUID tenantId,
-            @RequestParam("file") MultipartFile file) {
-        return ResponseEntity.ok(productService.uploadImage(id, tenantId, file));
+            @RequestParam("files") List<MultipartFile> files) {
+        return ResponseEntity.ok(productService.uploadImages(id, tenantId, files));
+    }
+
+    @DeleteMapping("/{id}/images/{imageId}")
+    public ResponseEntity<ProductResponse> deleteImage(
+            @PathVariable UUID id,
+            @RequestHeader("X-Tenant-Id") UUID tenantId,
+            @PathVariable UUID imageId) {
+        return ResponseEntity.ok(productService.deleteImage(id, tenantId, imageId));
     }
 }
