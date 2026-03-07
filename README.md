@@ -258,7 +258,7 @@ Images and files are stored in MinIO, running as a container alongside the servi
 
 | Bucket | Access | Usage |
 |---|---|---|
-| `products` | Public | Product images — URL stored directly on the product record |
+| `products` | Public | Product images — each product can have multiple images, URLs stored in a separate `product_image` table |
 | `seller-documents` | Private | Seller registration documents — only the object key is stored; presigned URLs are generated on demand |
 
 Seller profile logos and theme banners are stored in a public bucket (they are displayed on the storefront), so their URLs are stored directly on the record. Only business registration documents are private and accessed via presigned URLs.

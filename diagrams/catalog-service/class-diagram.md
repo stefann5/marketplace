@@ -11,12 +11,18 @@ classDiagram
         +int stock
         +int version
         +UUID categoryId
-        +String imageUrl
         +double averageRating
         +int reviewCount
         +int purchaseCount
         +LocalDateTime createdAt
         +LocalDateTime updatedAt
+    }
+
+    class ProductImage {
+        +UUID id
+        +UUID productId
+        +String imageUrl
+        +int displayOrder
     }
 
     class Category {
@@ -86,6 +92,7 @@ classDiagram
         +publishProductSearched(String term, List~UUID~ resultIds) void
     }
 
+    Product "1" --> "1..*" ProductImage : "has"
     Product "*" --> "1" Category
     Review "*" --> "1" Product : "reviews"
     Category "*" --> "0..1" Category : "parent of"
