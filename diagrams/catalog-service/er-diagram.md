@@ -14,6 +14,7 @@ erDiagram
         string image_url
         double average_rating
         int review_count
+        int purchase_count
         timestamp created_at
         timestamp updated_at
     }

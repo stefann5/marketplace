@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { DataViewModule } from 'primeng/dataview';
@@ -11,17 +11,20 @@ import { Product } from '../../../core/models/product.model';
   selector: 'app-product-list',
   standalone: true,
   imports: [CommonModule, DataViewModule, ButtonModule, TagModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './product-list.html'
 })
-export class ProductListComponent implements OnInit {
+export class ProductListComponent {
   products: Product[] = [];
   totalRecords = 0;
   rows = 12;
   first = 0;
 
-  constructor(private productService: ProductService, private router: Router) {}
-
-  ngOnInit(): void {
+  constructor(
+    private productService: ProductService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
+  ) {
     this.loadProducts(0);
   }
 
@@ -29,6 +32,7 @@ export class ProductListComponent implements OnInit {
     this.productService.getAll(page, this.rows).subscribe(res => {
       this.products = res.content;
       this.totalRecords = res.totalElements;
+      this.cdr.markForCheck();
     });
   }
 

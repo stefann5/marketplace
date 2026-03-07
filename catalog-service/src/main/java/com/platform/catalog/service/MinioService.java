@@ -20,8 +20,8 @@ public class MinioService {
     @Value("${minio.bucket-name}")
     private String bucketName;
 
-    @Value("${minio.endpoint}")
-    private String endpoint;
+    @Value("${minio.public-url}")
+    private String publicUrl;
 
     @PostConstruct
     void initBucket() {
@@ -67,7 +67,7 @@ public class MinioService {
                                 .build());
             }
 
-            return endpoint + "/" + bucketName + "/" + objectName;
+            return publicUrl + "/" + bucketName + "/" + objectName;
         } catch (Exception e) {
             throw new RuntimeException("Failed to upload image", e);
         }
@@ -76,7 +76,7 @@ public class MinioService {
     public void deleteImage(String imageUrl) {
         if (imageUrl == null || imageUrl.isBlank()) return;
         try {
-            String prefix = endpoint + "/" + bucketName + "/";
+            String prefix = publicUrl + "/" + bucketName + "/";
             if (!imageUrl.startsWith(prefix)) return;
             String objectName = imageUrl.substring(prefix.length());
             minioClient.removeObject(

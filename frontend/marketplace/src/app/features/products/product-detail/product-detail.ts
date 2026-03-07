@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
@@ -10,6 +10,7 @@ import { Product } from '../../../core/models/product.model';
   selector: 'app-product-detail',
   standalone: true,
   imports: [CommonModule, ButtonModule, TagModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './product-detail.html'
 })
 export class ProductDetailComponent implements OnInit {
@@ -18,14 +19,18 @@ export class ProductDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private productService: ProductService
+    private productService: ProductService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
       this.productService.getById(id).subscribe({
-        next: p => this.product = p,
+        next: p => {
+          this.product = p;
+          this.cdr.markForCheck();
+        },
         error: () => this.router.navigate(['/products'])
       });
     }

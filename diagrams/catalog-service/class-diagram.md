@@ -14,6 +14,7 @@ classDiagram
         +String imageUrl
         +double averageRating
         +int reviewCount
+        +int purchaseCount
         +LocalDateTime createdAt
         +LocalDateTime updatedAt
     }

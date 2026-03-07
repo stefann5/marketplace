@@ -123,7 +123,7 @@ Buyers can leave a review on any product they have purchased. The Catalog Servic
 - Comment: text (optional)
 - Buyer's name is displayed alongside the review
 - No seller responses
-- Average rating and review count are denormalized on the product record and updated on review creation/edit to avoid recomputing on every product listing query
+- Average rating, review count, and purchase count are denormalized on the product record and updated on review creation/edit (or order placement) to avoid recomputing on every product listing query
 
 #### Categories
 

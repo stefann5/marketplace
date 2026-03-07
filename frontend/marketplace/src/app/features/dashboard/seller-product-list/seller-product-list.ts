@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
@@ -14,24 +14,22 @@ import { Product } from '../../../core/models/product.model';
   standalone: true,
   imports: [CommonModule, TableModule, ButtonModule, ToastModule, ConfirmDialogModule],
   providers: [ConfirmationService, MessageService],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './seller-product-list.html'
 })
-export class SellerProductListComponent implements OnInit {
+export class SellerProductListComponent {
   products: Product[] = [];
   totalRecords = 0;
   rows = 10;
-  loading = false;
+  loading = true;
 
   constructor(
     private productService: ProductService,
     private router: Router,
     private confirmationService: ConfirmationService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private cdr: ChangeDetectorRef
   ) {}
-
-  ngOnInit(): void {
-    this.loadProducts(0);
-  }
 
   loadProducts(page: number): void {
     this.loading = true;
@@ -40,8 +38,12 @@ export class SellerProductListComponent implements OnInit {
         this.products = res.content;
         this.totalRecords = res.totalElements;
         this.loading = false;
+        this.cdr.markForCheck();
       },
-      error: () => this.loading = false
+      error: () => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
     });
   }
 

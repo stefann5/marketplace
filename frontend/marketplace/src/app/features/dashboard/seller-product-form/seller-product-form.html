@@ -30,8 +30,10 @@
           </div>
 
           <div class="flex flex-column gap-2">
-            <label for="image" class="font-semibold">Product Image</label>
-            <input id="image" type="file" accept="image/*" (change)="onFileSelect($event)" />
+            <label class="font-semibold">Product Image</label>
+            <p-fileupload mode="basic" chooseLabel="Choose Image" chooseIcon="pi pi-image"
+                          accept="image/*" [maxFileSize]="5000000" [auto]="false"
+                          (onSelect)="onFileSelect($event)" />
           </div>
 
           <div class="flex gap-2 mt-2">

@@ -6,6 +6,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
+import { FileUploadModule } from 'primeng/fileupload';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { ProductService } from '../../../core/services/product.service';
@@ -14,7 +15,7 @@ import { ProductRequest } from '../../../core/models/product.model';
 @Component({
   selector: 'app-seller-product-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, InputTextModule, InputNumberModule, TextareaModule, ButtonModule, ToastModule],
+  imports: [CommonModule, ReactiveFormsModule, InputTextModule, InputNumberModule, TextareaModule, ButtonModule, FileUploadModule, ToastModule],
   providers: [MessageService],
   templateUrl: './seller-product-form.html'
 })
@@ -54,10 +55,9 @@ export class SellerProductFormComponent implements OnInit {
     }
   }
 
-  onFileSelect(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.files?.length) {
-      this.selectedFile = input.files[0];
+  onFileSelect(event: any): void {
+    if (event.files?.length) {
+      this.selectedFile = event.files[0];
     }
   }
 
