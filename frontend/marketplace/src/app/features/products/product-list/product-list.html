@@ -11,8 +11,8 @@
               <div class="border border-surface-200 surface-card rounded-lg flex flex-column cursor-pointer hover:shadow-2 transition-all transition-duration-200"
                    style="height: 360px" (click)="viewProduct(product.id)">
                 <div class="flex justify-center align-items-center p-4 bg-surface-50 rounded-t-lg" style="height: 200px; overflow: hidden">
-                  @if (product.imageUrl) {
-                    <img [src]="product.imageUrl" [alt]="product.name" class="rounded object-contain" style="max-height: 100%; max-width: 100%" />
+                  @if (product.imageUrls.length) {
+                    <img [src]="product.imageUrls[0]" [alt]="product.name" class="rounded object-contain" style="max-height: 100%; max-width: 100%" />
                   } @else {
                     <div class="flex align-items-center justify-content-center w-full text-color-secondary">
                       <i class="pi pi-image text-6xl"></i>

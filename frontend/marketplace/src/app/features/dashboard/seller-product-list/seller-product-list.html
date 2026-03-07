@@ -24,8 +24,8 @@
         <ng-template #body let-product>
           <tr>
             <td>
-              @if (product.imageUrl) {
-                <img [src]="product.imageUrl" [alt]="product.name" width="50" height="50"
+              @if (product.imageUrls.length) {
+                <img [src]="product.imageUrls[0]" [alt]="product.name" width="50" height="50"
                      style="object-fit: cover; border-radius: 6px" />
               } @else {
                 <div class="flex align-items-center justify-content-center" style="width: 50px; height: 50px; border-radius: 6px; background: var(--surface-100)">

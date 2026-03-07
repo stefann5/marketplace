@@ -6,7 +6,7 @@ export interface Product {
   price: number;
   stock: number;
   categoryId: string | null;
-  imageUrl: string | null;
+  imageUrls: string[];
   averageRating: number;
   reviewCount: number;
   purchaseCount: number;

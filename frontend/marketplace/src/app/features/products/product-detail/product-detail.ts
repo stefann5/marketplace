@@ -15,6 +15,7 @@ import { Product } from '../../../core/models/product.model';
 })
 export class ProductDetailComponent implements OnInit {
   product: Product | null = null;
+  selectedImageIndex = 0;
 
   constructor(
     private route: ActivatedRoute,

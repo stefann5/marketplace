@@ -30,10 +30,17 @@
           </div>
 
           <div class="flex flex-column gap-2">
-            <label class="font-semibold">Product Image</label>
-            <p-fileupload mode="basic" chooseLabel="Choose Image" chooseIcon="pi pi-image"
-                          accept="image/*" [maxFileSize]="5000000" [auto]="false"
-                          (onSelect)="onFileSelect($event)" />
+            <label class="font-semibold">Product Images</label>
+            @if (existingImageUrls.length) {
+              <div class="flex gap-2 flex-wrap mb-2">
+                @for (url of existingImageUrls; track url) {
+                  <img [src]="url" alt="Product image" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px" />
+                }
+              </div>
+            }
+            <p-fileupload mode="basic" chooseLabel="Choose Images" chooseIcon="pi pi-images"
+                          accept="image/*" [maxFileSize]="5000000" [auto]="false" [multiple]="true"
+                          (onSelect)="onFilesSelect($event)" />
           </div>
 
           <div class="flex gap-2 mt-2">

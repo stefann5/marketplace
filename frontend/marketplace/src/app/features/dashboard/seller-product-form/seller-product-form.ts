@@ -23,7 +23,8 @@ export class SellerProductFormComponent implements OnInit {
   form!: FormGroup;
   isEdit = false;
   productId: string | null = null;
-  selectedFile: File | null = null;
+  selectedFiles: File[] = [];
+  existingImageUrls: string[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -51,13 +52,14 @@ export class SellerProductFormComponent implements OnInit {
           price: product.price,
           stock: product.stock
         });
+        this.existingImageUrls = product.imageUrls;
       });
     }
   }
 
-  onFileSelect(event: any): void {
+  onFilesSelect(event: any): void {
     if (event.files?.length) {
-      this.selectedFile = event.files[0];
+      this.selectedFiles = [...event.files];
     }
   }
 
@@ -71,8 +73,8 @@ export class SellerProductFormComponent implements OnInit {
 
     save$.subscribe({
       next: product => {
-        if (this.selectedFile) {
-          this.productService.uploadImage(product.id, this.selectedFile).subscribe({
+        if (this.selectedFiles.length) {
+          this.productService.uploadImages(product.id, this.selectedFiles).subscribe({
             next: () => this.router.navigate(['/dashboard/products']),
             error: () => {
               this.messageService.add({ severity: 'warn', summary: 'Saved', detail: 'Product saved but image upload failed' });

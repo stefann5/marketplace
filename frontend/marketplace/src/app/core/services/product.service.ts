@@ -36,9 +36,13 @@ export class ProductService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  uploadImage(id: string, file: File): Observable<Product> {
+  uploadImages(id: string, files: File[]): Observable<Product> {
     const formData = new FormData();
-    formData.append('file', file);
-    return this.http.post<Product>(`${this.apiUrl}/${id}/image`, formData);
+    files.forEach(file => formData.append('files', file));
+    return this.http.post<Product>(`${this.apiUrl}/${id}/images`, formData);
+  }
+
+  deleteImage(productId: string, imageId: string): Observable<Product> {
+    return this.http.delete<Product>(`${this.apiUrl}/${productId}/images/${imageId}`);
   }
 }
