@@ -1,15 +1,15 @@
 <p-toast />
 
-<div class="flex align-items-center justify-content-center min-h-screen surface-ground">
-  <p-card class="w-full max-w-30rem">
+<div class="flex items-center justify-center min-h-screen bg-ground">
+  <p-card class="w-full max-w-[30rem]">
     <ng-template #header>
-      <div class="text-center p-4 pb-0">
+      <div class="text-center p-6 pb-0">
         <h2 class="text-2xl font-bold m-0">Register</h2>
-        <p class="text-color-secondary mt-2">Create your account</p>
+        <p class="text-muted mt-2">Create your account</p>
       </div>
     </ng-template>
 
-    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="flex flex-column gap-4 p-2">
+    <form [formGroup]="registerForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-6 p-2">
       <div>
         <p-floatlabel variant="on">
           <input pInputText id="email" formControlName="email" class="w-full" />
@@ -41,7 +41,7 @@
       </div>
 
       <div>
-        <label class="block text-color-secondary font-semibold mb-2">I want to</label>
+        <label class="block text-muted font-semibold mb-2">I want to</label>
         <p-selectbutton [options]="roleOptions" formControlName="role" optionLabel="label" optionValue="value" styleClass="w-full" />
       </div>
 
@@ -50,7 +50,7 @@
 
     <ng-template #footer>
       <div class="text-center">
-        <span class="text-color-secondary">Already have an account? </span>
+        <span class="text-muted">Already have an account? </span>
         <a routerLink="/login" class="text-primary font-semibold no-underline cursor-pointer">Login</a>
       </div>
     </ng-template>

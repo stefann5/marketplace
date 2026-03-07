@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { DataViewModule } from 'primeng/dataview';
+import { SelectButtonModule } from 'primeng/selectbutton';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { ProductService } from '../../../core/services/product.service';
@@ -10,7 +12,7 @@ import { Product } from '../../../core/models/product.model';
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, DataViewModule, ButtonModule, TagModule],
+  imports: [CommonModule, FormsModule, DataViewModule, SelectButtonModule, ButtonModule, TagModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './product-list.html'
 })
@@ -19,6 +21,8 @@ export class ProductListComponent {
   totalRecords = 0;
   rows = 12;
   first = 0;
+  layout: 'list' | 'grid' = 'grid';
+  layoutOptions: string[] = ['list', 'grid'];
 
   constructor(
     private productService: ProductService,

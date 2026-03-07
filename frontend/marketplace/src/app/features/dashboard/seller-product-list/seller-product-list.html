@@ -1,14 +1,14 @@
 <p-toast />
 <p-confirmdialog />
 
-<div class="surface-ground min-h-screen p-4">
-  <div class="max-w-80rem mx-auto">
-    <div class="flex justify-content-between align-items-center mb-4">
-      <h2 class="text-3xl font-bold text-color m-0">My Products</h2>
+<div class="bg-ground min-h-screen p-4">
+  <div class="max-w-[80rem] mx-auto">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-3xl font-bold text-content m-0">My Products</h2>
       <p-button label="Add Product" icon="pi pi-plus" (onClick)="addProduct()" />
     </div>
 
-    <div class="surface-card rounded-lg">
+    <div class="bg-surface-0 rounded-lg">
       <p-table [value]="products" [paginator]="true" [rows]="rows" [totalRecords]="totalRecords"
                [lazy]="true" (onLazyLoad)="onPageChange($event)" [loading]="loading"
                [tableStyle]="{'min-width': '50rem'}">
@@ -28,8 +28,8 @@
                 <img [src]="product.imageUrls[0]" [alt]="product.name" width="50" height="50"
                      style="object-fit: cover; border-radius: 6px" />
               } @else {
-                <div class="flex align-items-center justify-content-center" style="width: 50px; height: 50px; border-radius: 6px; background: var(--surface-100)">
-                  <i class="pi pi-image text-color-secondary"></i>
+                <div class="flex items-center justify-center" style="width: 50px; height: 50px; border-radius: 6px; background: var(--p-surface-100)">
+                  <i class="pi pi-image text-muted"></i>
                 </div>
               }
             </td>
@@ -46,7 +46,7 @@
         </ng-template>
         <ng-template #emptymessage>
           <tr>
-            <td colspan="5" class="text-center p-4 text-color-secondary">
+            <td colspan="5" class="text-center p-4 text-muted">
               No products yet. Click "Add Product" to create your first listing.
             </td>
           </tr>
