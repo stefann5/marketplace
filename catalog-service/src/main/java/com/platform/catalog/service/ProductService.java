@@ -5,6 +5,7 @@ import com.platform.catalog.dto.ProductResponse;
 import com.platform.catalog.entity.Product;
 import com.platform.catalog.entity.ProductImage;
 import com.platform.catalog.exception.CatalogException;
+import com.platform.catalog.repository.CategoryRepository;
 import com.platform.catalog.repository.ProductImageRepository;
 import com.platform.catalog.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductImageRepository productImageRepository;
+    private final CategoryRepository categoryRepository;
     private final MinioService minioService;
 
     @Transactional(readOnly = true)
@@ -112,6 +114,14 @@ public class ProductService {
         product.setDescription(request.description());
         product.setPrice(request.price());
         product.setStock(request.stock());
+
+        if (request.categoryId() != null) {
+            categoryRepository.findById(request.categoryId())
+                    .orElseThrow(() -> new CatalogException("Category not found", HttpStatus.NOT_FOUND));
+            if (categoryRepository.existsByParentId(request.categoryId())) {
+                throw new CatalogException("Products can only be assigned to leaf categories", HttpStatus.BAD_REQUEST);
+            }
+        }
         product.setCategoryId(request.categoryId());
     }
 }

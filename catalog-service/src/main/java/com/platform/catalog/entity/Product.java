@@ -40,7 +40,7 @@ public class Product {
     @Version
     private int version;
 
-    private UUID categoryId;
+    private Long categoryId;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("displayOrder")
