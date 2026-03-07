@@ -1,0 +1,199 @@
+<div class="p-4">
+    <div class="flex gap-4">
+        <!-- Filters sidebar (left) -->
+            <div class="w-96 shrink-0">
+                <div class="bg-surface-0 border border-surface-200 rounded p-4 sticky top-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="font-semibold text-lg">Filters</span>
+                        <p-button label="Clear" [text]="true" size="small" (onClick)="clearFilters()" />
+                    </div>
+
+                    <!-- Category -->
+                    <div class="mb-4">
+                        <span class="font-medium text-sm block mb-2">Category</span>
+                        <p-tree [value]="categoryNodes" selectionMode="single" [(selection)]="selectedCategoryNode"
+                            (onNodeSelect)="onCategorySelect($event)" (onNodeUnselect)="onCategoryUnselect()"
+                            [filter]="true" filterPlaceholder="Filter" scrollHeight="200px" class="w-full text-sm" />
+                    </div>
+
+                    <!-- Price Range -->
+                    <div class="mb-4">
+                        <span class="font-medium text-sm block mb-2">Price Range</span>
+                        <p-slider [(ngModel)]="priceRange" [range]="true" [min]="0" [max]="10000" [step]="10"
+                            (onSlideEnd)="applyFilters()" class="mb-2" />
+                        <div class="flex items-center gap-2">
+                            <p-inputnumber [(ngModel)]="priceRange[0]" mode="currency" currency="USD" [min]="0"
+                                [max]="priceRange[1]" inputStyleClass="w-full" class="flex-1"
+                                [inputStyle]="{ width: '100%' }" size="small" />
+                            <span class="text-muted">–</span>
+                            <p-inputnumber [(ngModel)]="priceRange[1]" mode="currency" currency="USD"
+                                [min]="priceRange[0]" [max]="10000" inputStyleClass="w-full" class="flex-1"
+                                [inputStyle]="{ width: '100%' }" size="small" />
+                        </div>
+                    </div>
+
+                    <!-- Minimum Rating -->
+                    <div class="mb-4">
+                        <span class="font-medium text-sm block mb-2">Minimum Rating</span>
+                        <div class="flex flex-col gap-2">
+                            @for (opt of ratingOptions; track opt.value) {
+                            <div class="flex items-center gap-2 cursor-pointer px-2 py-1 rounded transition-colors"
+                                [class.bg-primary/10]="minRating === opt.value"
+                                (click)="minRating = opt.value; applyFilters()">
+                                @if (opt.value) {
+                                <div class="flex items-center gap-1">
+                                    @for (star of [1,2,3,4,5]; track star) {
+                                    <i class="pi text-sm" [class.pi-star-fill]="star <= opt.value!"
+                                        [class.text-yellow-500]="star <= opt.value!" [class.pi-star]="star > opt.value!"
+                                        [class.text-surface-200]="star > opt.value!"></i>
+                                    }
+                                    <span class="text-sm text-muted ml-1">& up</span>
+                                </div>
+                                } @else {
+                                <span class="text-sm">Any rating</span>
+                                }
+                            </div>
+                            }
+                        </div>
+                    </div>
+
+                    <p-button label="Apply Filters" styleClass="w-full" (onClick)="applyFilters()" />
+                </div>
+            </div>
+
+        <!-- Main content area -->
+        <div class="flex-1">
+            <!-- Top bar: results count + sort -->
+            <div
+                class="flex items-center justify-between bg-surface-0 border border-surface-200 rounded px-4 py-3 mb-4">
+                <span class="text-muted text-sm">
+                    @if (totalRecords > 0) {
+                    Showing {{ resultStart }}–{{ resultEnd }} of {{ totalRecords }} results
+                    } @else {
+                    No results found
+                    }
+                </span>
+                <div class="flex items-center gap-4">
+                    <p-selectbutton [(ngModel)]="layout" [options]="layoutOptions" [allowEmpty]="false">
+                        <ng-template #item let-item>
+                            <i class="pi" [ngClass]="{ 'pi-bars': item === 'list', 'pi-table': item === 'grid' }"></i>
+                        </ng-template>
+                    </p-selectbutton>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-muted">Sort by</span>
+                        <p-select [options]="sortOptions" [(ngModel)]="selectedSort" optionLabel="label"
+                            (onChange)="onSortChange()" [style]="{ minWidth: '14rem' }" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- DataView -->
+            <p-dataview [value]="products" [paginator]="true" [rows]="rows" [totalRecords]="totalRecords" [lazy]="true"
+                (onLazyLoad)="onPageChange($event)" [first]="page * rows" [layout]="layout">
+                <ng-template #grid let-items>
+                    <div class="grid grid-cols-12 gap-4">
+                        @for (product of items; track product.id) {
+                        <div class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
+                            <div class="flex flex-col border border-surface-200 bg-surface-0 rounded cursor-pointer"
+                                (click)="viewProduct(product.id)">
+                                <div class="bg-surface-50 flex justify-center rounded p-4">
+                                    <div class="relative mx-auto">
+                                        @if (product.imageUrls.length) {
+                                        <img class="rounded" [src]="product.imageUrls[0]" [alt]="product.name"
+                                            style="width: 260px; height: 200px; object-fit: cover" />
+                                        } @else {
+                                        <div class="flex items-center justify-center rounded bg-surface-100"
+                                            style="width: 260px; height: 200px">
+                                            <i class="pi pi-image text-6xl text-muted"></i>
+                                        </div>
+                                        }
+                                        <p-tag [value]="getStockLabel(product.stock)"
+                                            [severity]="getStockSeverity(product.stock)" class="absolute"
+                                            [style.left.px]="4" [style.top.px]="4" />
+                                    </div>
+                                </div>
+                                <div class="p-4 flex-auto">
+                                    <div class="flex flex-row justify-between items-start gap-2">
+                                        <div>
+                                            <div class="text-lg font-medium mt-1">{{ product.name }}</div>
+                                            @if (getCategoryName(product.categoryId)) {
+                                            <span class="text-sm text-muted">{{ getCategoryName(product.categoryId)
+                                                }}</span>
+                                            }
+                                        </div>
+                                        <div class="bg-surface-100 p-1" style="border-radius: 30px">
+                                            <div class="bg-surface-0 flex items-center gap-2 justify-center py-1 px-2"
+                                                style="border-radius: 30px; box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.04), 0px 1px 2px 0px rgba(0, 0, 0, 0.06)">
+                                                <span class="text-surface-900 font-medium text-sm">{{
+                                                    product.averageRating | number:'1.1-1' }}</span>
+                                                <i class="pi pi-star-fill text-yellow-500"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col gap-4 mt-4">
+                                        <span class="text-2xl font-semibold">{{ product.price | currency: 'USD'
+                                            }}</span>
+                                        <div class="flex gap-2">
+                                            <button pButton icon="pi pi-shopping-cart" label="Buy Now"
+                                                [disabled]="product.stock === 0"
+                                                class="flex-auto whitespace-nowrap"></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </ng-template>
+                <ng-template #list let-items>
+                    @for (product of items; track product.id) {
+                    <div class="flex w-full p-6 gap-4 cursor-pointer border border-surface-200 bg-surface-0 rounded mb-4"
+                        (click)="viewProduct(product.id)">
+                        <div class="bg-surface-50 flex justify-center rounded p-4">
+                            <div class="relative mx-auto">
+                                @if (product.imageUrls.length) {
+                                <img class="block mx-auto rounded" [src]="product.imageUrls[0]" [alt]="product.name"
+                                    style="width: 300px; height: 200px; object-fit: cover" />
+                                } @else {
+                                <div class="flex items-center justify-center bg-surface-100 rounded"
+                                    style="width: 300px; height: 200px">
+                                    <i class="pi pi-image text-6xl text-muted"></i>
+                                </div>
+                                }
+                                <p-tag [value]="getStockLabel(product.stock)" [severity]="getStockSeverity(product.stock)"
+                                    class="absolute" [style.left.px]="4" [style.top.px]="4" />
+                            </div>
+                        </div>
+                        <div class="flex flex-1 sm:flex-row justify-between sm:items-center gap-6">
+                            <div class="flex flex-row sm:flex-col justify-between items-start gap-2">
+                                <div>
+                                    <div class="text-lg font-medium">{{ product.name }}</div>
+                                    @if (getCategoryName(product.categoryId)) {
+                                    <span class="text-sm text-muted">{{ getCategoryName(product.categoryId) }}</span>
+                                    }
+                                </div>
+                                <div class="bg-surface-100 p-1" style="border-radius: 30px">
+                                    <div class="bg-surface-0 flex items-center gap-2 justify-center py-1 px-2"
+                                        style="border-radius: 30px; box-shadow: 0px 1px 2px 0px rgba(0, 0, 0, 0.04), 0px 1px 2px 0px rgba(0, 0, 0, 0.06)">
+                                        <span class="text-surface-900 font-medium text-sm">{{ product.averageRating | number:'1.1-1' }}</span>
+                                        <i class="pi pi-star-fill text-yellow-500"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex flex-col sm:items-end gap-4">
+                                <span class="text-xl font-semibold">{{ product.price | currency: 'USD' }}</span>
+                                <div class="flex gap-2">
+                                    <button pButton icon="pi pi-shopping-cart" label="Buy Now"
+                                        [disabled]="product.stock === 0"
+                                        class="flex-auto sm:flex-initial whitespace-nowrap"></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    }
+                </ng-template>
+            </p-dataview>
+        </div>
+
+    </div>
+</div>

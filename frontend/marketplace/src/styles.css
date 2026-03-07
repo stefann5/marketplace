@@ -1,0 +1,23 @@
+@import "tailwindcss";
+@import "primeicons/primeicons.css";
+
+@theme {
+  --color-surface-0: var(--p-surface-0);
+  --color-surface-50: var(--p-surface-50);
+  --color-surface-100: var(--p-surface-100);
+  --color-surface-200: var(--p-surface-200);
+  --color-surface-700: var(--p-surface-700);
+  --color-surface-900: var(--p-surface-900);
+  --color-primary: var(--p-primary-color);
+  --color-muted: var(--p-text-muted-color);
+  --color-content: var(--p-text-color);
+  --color-ground: var(--p-surface-ground, var(--p-surface-100));
+}
+
+.p-dataview-header {
+  border: 0px !important;
+}
+
+.p-dataview-paginator-bottom {
+  border: 0px !important;
+}

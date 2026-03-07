@@ -16,7 +16,7 @@ A multi-tenant marketplace platform where buyers browse and purchase merchandise
 
 ### Buyer
 - Browse the marketplace and individual seller shops
-- Search products by name, filter by category and price range, sort by price/date
+- Search products by name, filter by category and price range, sort by price/date/rating (default: rating)
 - Add products from multiple sellers to a single shopping cart
 - Complete purchases (checkout splits into per-seller sub-orders)
 - View order history (read-only, status shown as "Purchased")
@@ -105,7 +105,7 @@ Seller-specific configuration (profiles, documents, themes) is stored in the Sel
 - Product CRUD (seller-scoped by tenant)
 - Product search by name
 - Filtering by category, price range, and minimum rating
-- Sorting by price and date of posting (update date)
+- Sorting by price, date of posting (update date), and rating (default sort: rating descending)
 - Out-of-stock products are displayed but annotated accordingly
 - Product reviews and ratings (see Reviews below)
 - Platform category management (admin-only endpoints)
@@ -123,14 +123,14 @@ Buyers can leave a review on any product they have purchased. The Catalog Servic
 - Comment: text (optional)
 - Buyer's name is displayed alongside the review
 - No seller responses
-- Average rating and review count are denormalized on the product record and updated on review creation/edit to avoid recomputing on every product listing query
+- Average rating, review count, and purchase count are denormalized on the product record and updated on review creation/edit (or order placement) to avoid recomputing on every product listing query
 
 #### Categories
 
 Platform-level hierarchical categories managed by the admin, pre-seeded by scraping a major marketplace (Amazon/Temu). Sellers assign their products to leaf categories only.
 
 ```sql
-category (id, name, parent_id, display_order)
+category (id, name, parent_id)
 ```
 
 - Hierarchical with recursive CTE for subtree queries
@@ -258,7 +258,7 @@ Images and files are stored in MinIO, running as a container alongside the servi
 
 | Bucket | Access | Usage |
 |---|---|---|
-| `products` | Public | Product images — URL stored directly on the product record |
+| `products` | Public | Product images — each product can have multiple images, URLs stored in a separate `product_image` table |
 | `seller-documents` | Private | Seller registration documents — only the object key is stored; presigned URLs are generated on demand |
 
 Seller profile logos and theme banners are stored in a public bucket (they are displayed on the storefront), so their URLs are stored directly on the record. Only business registration documents are private and accessed via presigned URLs.

@@ -1,0 +1,60 @@
+<p-toast />
+
+<div class="bg-ground min-h-screen p-4">
+  <div class="max-w-[40rem] mx-auto">
+    <p-button icon="pi pi-arrow-left" label="Back to Products" [text]="true" (onClick)="cancel()" class="mb-4" />
+
+    <div class="bg-surface-0 rounded-lg p-5">
+      <h2 class="text-2xl font-bold text-content mt-0 mb-4">{{ isEdit ? 'Edit Product' : 'New Product' }}</h2>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()">
+        <div class="flex flex-col gap-4">
+          <div class="flex flex-col gap-2">
+            <label for="name" class="font-semibold">Name</label>
+            <input id="name" type="text" pInputText formControlName="name" />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label for="description" class="font-semibold">Description</label>
+            <textarea id="description" pTextarea formControlName="description" rows="5"></textarea>
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label for="price" class="font-semibold">Price</label>
+            <p-inputnumber formControlName="price" mode="currency" currency="USD" [minFractionDigits]="2" />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label for="stock" class="font-semibold">Stock</label>
+            <p-inputnumber formControlName="stock" [min]="0" [showButtons]="true" />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label for="category" class="font-semibold">Category</label>
+            <p-treeselect formControlName="category" [options]="categoryNodes" placeholder="Select a category"
+                          [filter]="true" [showClear]="true" />
+          </div>
+
+          <div class="flex flex-col gap-2">
+            <label class="font-semibold">Product Images</label>
+            @if (existingImageUrls.length) {
+              <div class="flex gap-2 flex-wrap mb-2">
+                @for (url of existingImageUrls; track url) {
+                  <img [src]="url" alt="Product image" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px" />
+                }
+              </div>
+            }
+            <p-fileupload mode="basic" chooseLabel="Choose Images" chooseIcon="pi pi-images"
+                          accept="image/*" [maxFileSize]="5000000" [auto]="false" [multiple]="true"
+                          (onSelect)="onFilesSelect($event)" />
+          </div>
+
+          <div class="flex gap-2 mt-2">
+            <p-button label="Save" type="submit" [disabled]="form.invalid" />
+            <p-button label="Cancel" severity="secondary" [outlined]="true" (onClick)="cancel()" />
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

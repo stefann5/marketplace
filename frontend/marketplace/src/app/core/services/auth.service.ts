@@ -58,4 +58,23 @@ export class AuthService {
       localStorage.setItem('refreshToken', res.refreshToken);
     }
   }
+
+  getUserRole(): string | null {
+    return this.getClaim('role');
+  }
+
+  getTenantId(): string | null {
+    return this.getClaim('tenantId');
+  }
+
+  private getClaim(key: string): string | null {
+    const token = this.getAccessToken();
+    if (!token) return null;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload[key] ?? null;
+    } catch {
+      return null;
+    }
+  }
 }

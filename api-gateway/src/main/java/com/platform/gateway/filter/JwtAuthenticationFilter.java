@@ -29,6 +29,10 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             "/api/auth/refresh"
     );
 
+    private static final List<String> PUBLIC_GET_PATHS = List.of(
+            "/api/products"
+    );
+
     public JwtAuthenticationFilter(@Value("${jwt.secret}") String secret) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
@@ -36,8 +40,13 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
+        String method = exchange.getRequest().getMethod().name();
 
         if (isOpenPath(path)) {
+            return chain.filter(exchange);
+        }
+
+        if ("GET".equals(method) && isPublicGetPath(path)) {
             return chain.filter(exchange);
         }
 
@@ -78,6 +87,11 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private boolean isOpenPath(String path) {
         return OPEN_PATHS.stream().anyMatch(path::startsWith);
+    }
+
+    private boolean isPublicGetPath(String path) {
+        if (path.startsWith("/api/products/seller")) return false;
+        return PUBLIC_GET_PATHS.stream().anyMatch(path::startsWith);
     }
 
     @Override
