@@ -2,15 +2,20 @@ package com.platform.catalog.service;
 
 import com.platform.catalog.dto.ProductRequest;
 import com.platform.catalog.dto.ProductResponse;
+import com.platform.catalog.dto.ProductSearchCriteria;
 import com.platform.catalog.entity.Product;
 import com.platform.catalog.entity.ProductImage;
 import com.platform.catalog.exception.CatalogException;
 import com.platform.catalog.repository.CategoryRepository;
 import com.platform.catalog.repository.ProductImageRepository;
 import com.platform.catalog.repository.ProductRepository;
+import com.platform.catalog.specification.ProductSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,8 +35,44 @@ public class ProductService {
     private final MinioService minioService;
 
     @Transactional(readOnly = true)
-    public Page<ProductResponse> getAllProducts(Pageable pageable) {
-        return productRepository.findAll(pageable).map(ProductResponse::from);
+    public Page<ProductResponse> searchProducts(ProductSearchCriteria criteria, Pageable pageable) {
+        Specification<Product> spec = Specification.where(null);
+
+        if (criteria.name() != null && !criteria.name().isBlank()) {
+            spec = spec.and(ProductSpecification.hasNameLike(criteria.name()));
+        }
+        if (criteria.categoryId() != null) {
+            List<Long> categoryIds = categoryRepository.findSubtree(criteria.categoryId())
+                    .stream()
+                    .map(c -> c.getId())
+                    .collect(Collectors.toList());
+            spec = spec.and(ProductSpecification.hasCategoryIn(categoryIds));
+        }
+        if (criteria.minPrice() != null) {
+            spec = spec.and(ProductSpecification.hasMinPrice(criteria.minPrice()));
+        }
+        if (criteria.maxPrice() != null) {
+            spec = spec.and(ProductSpecification.hasMaxPrice(criteria.maxPrice()));
+        }
+        if (criteria.minRating() != null) {
+            spec = spec.and(ProductSpecification.hasMinRating(criteria.minRating()));
+        }
+
+        Sort sort = resolveSort(criteria.sortBy(), criteria.sortDirection());
+        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+
+        return productRepository.findAll(spec, sortedPageable).map(ProductResponse::from);
+    }
+
+    private Sort resolveSort(String sortBy, String direction) {
+        Sort.Direction dir = "asc".equalsIgnoreCase(direction) ? Sort.Direction.ASC : Sort.Direction.DESC;
+
+        return switch (sortBy != null ? sortBy : "rating") {
+            case "price" -> Sort.by(dir, "price");
+            case "date" -> Sort.by(dir, "updatedAt");
+            case "rating" -> Sort.by(dir, "averageRating");
+            default -> Sort.by(Sort.Direction.DESC, "averageRating");
+        };
     }
 
     @Transactional(readOnly = true)

@@ -45,4 +45,28 @@ export class ProductService {
   deleteImage(productId: string, imageId: string): Observable<Product> {
     return this.http.delete<Product>(`${this.apiUrl}/${productId}/images/${imageId}`);
   }
+
+  search(params: {
+    name?: string;
+    categoryId?: number;
+    minPrice?: number;
+    maxPrice?: number;
+    minRating?: number;
+    sortBy?: string;
+    sortDirection?: string;
+    page: number;
+    size: number;
+  }): Observable<Page<Product>> {
+    let httpParams = new HttpParams()
+      .set('page', params.page)
+      .set('size', params.size);
+    if (params.name) httpParams = httpParams.set('name', params.name);
+    if (params.categoryId != null) httpParams = httpParams.set('categoryId', params.categoryId);
+    if (params.minPrice != null) httpParams = httpParams.set('minPrice', params.minPrice);
+    if (params.maxPrice != null) httpParams = httpParams.set('maxPrice', params.maxPrice);
+    if (params.minRating != null) httpParams = httpParams.set('minRating', params.minRating);
+    if (params.sortBy) httpParams = httpParams.set('sortBy', params.sortBy);
+    if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
+    return this.http.get<Page<Product>>(this.apiUrl, { params: httpParams });
+  }
 }

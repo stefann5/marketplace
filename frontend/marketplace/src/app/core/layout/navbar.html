@@ -7,7 +7,8 @@
   <div class="flex-1">
     <p-iconfield class="w-full">
       <p-inputicon class="pi pi-search" />
-      <input type="text" pInputText placeholder="Search" class="w-full" />
+      <input type="text" pInputText placeholder="Search" class="w-full"
+        [(ngModel)]="searchQuery" (keydown.enter)="onSearch()" />
     </p-iconfield>
   </div>
 
@@ -26,5 +27,6 @@
 </nav>
 
 <p-drawer [(visible)]="drawerVisible" header="Categories" position="left" styleClass="w-80">
-  <p-tree [value]="categoryNodes" [filter]="true" filterPlaceholder="Filter categories" />
+  <p-tree [value]="categoryNodes" [filter]="true" filterPlaceholder="Filter categories"
+    selectionMode="single" (onNodeSelect)="onCategorySelect($event)" />
 </p-drawer>

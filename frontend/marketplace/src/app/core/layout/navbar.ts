@@ -53,4 +53,15 @@ export class NavbarComponent implements OnInit {
   goHome(): void {
     this.router.navigate(['/products']);
   }
+
+  onSearch(): void {
+    if (this.searchQuery.trim()) {
+      this.router.navigate(['/products/search'], { queryParams: { name: this.searchQuery.trim() } });
+    }
+  }
+
+  onCategorySelect(event: any): void {
+    this.drawerVisible = false;
+    this.router.navigate(['/products/search'], { queryParams: { categoryId: event.node.data } });
+  }
 }

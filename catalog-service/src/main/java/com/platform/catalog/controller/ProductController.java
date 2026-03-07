@@ -2,6 +2,7 @@ package com.platform.catalog.controller;
 
 import com.platform.catalog.dto.ProductRequest;
 import com.platform.catalog.dto.ProductResponse;
+import com.platform.catalog.dto.ProductSearchCriteria;
 import com.platform.catalog.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,9 +27,18 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<Page<ProductResponse>> getAll(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice,
+            @RequestParam(required = false) Double minRating,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortDirection,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ResponseEntity.ok(productService.getAllProducts(PageRequest.of(page, size)));
+        ProductSearchCriteria criteria = new ProductSearchCriteria(
+                name, categoryId, minPrice, maxPrice, minRating, sortBy, sortDirection);
+        return ResponseEntity.ok(productService.searchProducts(criteria, PageRequest.of(page, size)));
     }
 
     @GetMapping("/{id}")

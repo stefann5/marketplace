@@ -16,7 +16,7 @@ A multi-tenant marketplace platform where buyers browse and purchase merchandise
 
 ### Buyer
 - Browse the marketplace and individual seller shops
-- Search products by name, filter by category and price range, sort by price/date
+- Search products by name, filter by category and price range, sort by price/date/rating (default: rating)
 - Add products from multiple sellers to a single shopping cart
 - Complete purchases (checkout splits into per-seller sub-orders)
 - View order history (read-only, status shown as "Purchased")
@@ -105,7 +105,7 @@ Seller-specific configuration (profiles, documents, themes) is stored in the Sel
 - Product CRUD (seller-scoped by tenant)
 - Product search by name
 - Filtering by category, price range, and minimum rating
-- Sorting by price and date of posting (update date)
+- Sorting by price, date of posting (update date), and rating (default sort: rating descending)
 - Out-of-stock products are displayed but annotated accordingly
 - Product reviews and ratings (see Reviews below)
 - Platform category management (admin-only endpoints)
