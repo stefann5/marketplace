@@ -5,7 +5,7 @@ import { AuthService } from '../../core/services/auth.service';
 @Component({
   selector: 'app-home',
   standalone: true,
-  templateUrl: './home.html'
+  template: ''
 })
 export class HomeComponent implements OnInit {
   constructor(private router: Router, private authService: AuthService) {}

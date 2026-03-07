@@ -5,7 +5,7 @@ export interface Product {
   description: string;
   price: number;
   stock: number;
-  categoryId: string | null;
+  categoryId: number | null;
   imageUrls: string[];
   averageRating: number;
   reviewCount: number;
@@ -19,7 +19,7 @@ export interface ProductRequest {
   description: string;
   price: number;
   stock: number;
-  categoryId?: string;
+  categoryId?: number;
 }
 
 export interface Page<T> {

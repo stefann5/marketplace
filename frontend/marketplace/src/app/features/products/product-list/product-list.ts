@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +7,7 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { ProductService } from '../../../core/services/product.service';
+import { CategoryService } from '../../../core/services/category.service';
 import { Product } from '../../../core/models/product.model';
 
 @Component({
@@ -16,19 +17,27 @@ import { Product } from '../../../core/models/product.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './product-list.html'
 })
-export class ProductListComponent {
+export class ProductListComponent implements OnInit {
   products: Product[] = [];
   totalRecords = 0;
   rows = 12;
   first = 0;
   layout: 'list' | 'grid' = 'grid';
   layoutOptions: string[] = ['list', 'grid'];
+  categoryMap = new Map<number, string>();
 
   constructor(
     private productService: ProductService,
+    private categoryService: CategoryService,
     private router: Router,
     private cdr: ChangeDetectorRef
-  ) {
+  ) {}
+
+  ngOnInit(): void {
+    this.categoryService.getCategoryMap().subscribe(map => {
+      this.categoryMap = map;
+      this.cdr.markForCheck();
+    });
     this.loadProducts(0);
   }
 
@@ -47,6 +56,11 @@ export class ProductListComponent {
 
   viewProduct(id: string): void {
     this.router.navigate(['/products', id]);
+  }
+
+  getCategoryName(categoryId: number | null): string {
+    if (categoryId === null) return '';
+    return this.categoryMap.get(categoryId) ?? '';
   }
 
   getStockSeverity(stock: number): 'success' | 'warn' | 'danger' {

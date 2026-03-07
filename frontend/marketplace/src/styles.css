@@ -13,3 +13,11 @@
   --color-content: var(--p-text-color);
   --color-ground: var(--p-surface-ground, var(--p-surface-100));
 }
+
+.p-dataview-header {
+  border: 0px !important;
+}
+
+.p-dataview-paginator-bottom {
+  border: 0px !important;
+}

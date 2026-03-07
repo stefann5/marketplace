@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
@@ -7,6 +7,7 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ProductService } from '../../../core/services/product.service';
+import { CategoryService } from '../../../core/services/category.service';
 import { Product } from '../../../core/models/product.model';
 
 @Component({
@@ -17,19 +18,33 @@ import { Product } from '../../../core/models/product.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './seller-product-list.html'
 })
-export class SellerProductListComponent {
+export class SellerProductListComponent implements OnInit {
   products: Product[] = [];
   totalRecords = 0;
   rows = 10;
   loading = true;
+  categoryMap = new Map<number, string>();
 
   constructor(
     private productService: ProductService,
+    private categoryService: CategoryService,
     private router: Router,
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {}
+
+  ngOnInit(): void {
+    this.categoryService.getCategoryMap().subscribe(map => {
+      this.categoryMap = map;
+      this.cdr.markForCheck();
+    });
+  }
+
+  getCategoryName(categoryId: number | null): string {
+    if (categoryId === null) return '—';
+    return this.categoryMap.get(categoryId) ?? '—';
+  }
 
   loadProducts(page: number): void {
     this.loading = true;

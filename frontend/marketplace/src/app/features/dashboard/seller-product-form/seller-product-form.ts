@@ -7,15 +7,17 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { TextareaModule } from 'primeng/textarea';
 import { ButtonModule } from 'primeng/button';
 import { FileUploadModule } from 'primeng/fileupload';
+import { TreeSelectModule } from 'primeng/treeselect';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { MessageService, TreeNode } from 'primeng/api';
 import { ProductService } from '../../../core/services/product.service';
+import { CategoryService } from '../../../core/services/category.service';
 import { ProductRequest } from '../../../core/models/product.model';
 
 @Component({
   selector: 'app-seller-product-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, InputTextModule, InputNumberModule, TextareaModule, ButtonModule, FileUploadModule, ToastModule],
+  imports: [CommonModule, ReactiveFormsModule, InputTextModule, InputNumberModule, TextareaModule, ButtonModule, FileUploadModule, TreeSelectModule, ToastModule],
   providers: [MessageService],
   templateUrl: './seller-product-form.html'
 })
@@ -25,12 +27,14 @@ export class SellerProductFormComponent implements OnInit {
   productId: string | null = null;
   selectedFiles: File[] = [];
   existingImageUrls: string[] = [];
+  categoryNodes: TreeNode[] = [];
 
   constructor(
     private fb: FormBuilder,
     private route: ActivatedRoute,
     private router: Router,
     private productService: ProductService,
+    private categoryService: CategoryService,
     private messageService: MessageService
   ) {}
 
@@ -39,7 +43,12 @@ export class SellerProductFormComponent implements OnInit {
       name: ['', Validators.required],
       description: ['', Validators.required],
       price: [null, [Validators.required, Validators.min(0.01)]],
-      stock: [0, [Validators.required, Validators.min(0)]]
+      stock: [0, [Validators.required, Validators.min(0)]],
+      category: [null, Validators.required]
+    });
+
+    this.categoryService.getTreeNodes().subscribe(nodes => {
+      this.categoryNodes = nodes;
     });
 
     this.productId = this.route.snapshot.paramMap.get('id');
@@ -53,6 +62,12 @@ export class SellerProductFormComponent implements OnInit {
           stock: product.stock
         });
         this.existingImageUrls = product.imageUrls;
+        if (product.categoryId) {
+          this.categoryService.getTreeNodes().subscribe(nodes => {
+            const node = this.findNode(nodes, product.categoryId!);
+            if (node) this.form.patchValue({ category: node });
+          });
+        }
       });
     }
   }
@@ -66,7 +81,14 @@ export class SellerProductFormComponent implements OnInit {
   onSubmit(): void {
     if (this.form.invalid) return;
 
-    const request: ProductRequest = this.form.value;
+    const formValue = this.form.value;
+    const request: ProductRequest = {
+      name: formValue.name,
+      description: formValue.description,
+      price: formValue.price,
+      stock: formValue.stock,
+      categoryId: formValue.category?.data ?? null
+    };
     const save$ = this.isEdit
       ? this.productService.update(this.productId!, request)
       : this.productService.create(request);
@@ -92,5 +114,16 @@ export class SellerProductFormComponent implements OnInit {
 
   cancel(): void {
     this.router.navigate(['/dashboard/products']);
+  }
+
+  private findNode(nodes: TreeNode[], id: number): TreeNode | null {
+    for (const node of nodes) {
+      if (node.data === id) return node;
+      if (node.children) {
+        const found = this.findNode(node.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
   }
 }

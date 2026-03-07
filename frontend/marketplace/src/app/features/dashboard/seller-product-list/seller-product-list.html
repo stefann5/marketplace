@@ -16,6 +16,7 @@
           <tr>
             <th style="width: 80px">Image</th>
             <th>Name</th>
+            <th style="width: 160px">Category</th>
             <th style="width: 120px">Price</th>
             <th style="width: 100px">Stock</th>
             <th style="width: 140px">Actions</th>
@@ -34,6 +35,7 @@
               }
             </td>
             <td class="font-semibold">{{ product.name }}</td>
+            <td>{{ getCategoryName(product.categoryId) }}</td>
             <td>{{ product.price | currency:'USD' }}</td>
             <td>{{ product.stock }}</td>
             <td>
@@ -46,7 +48,7 @@
         </ng-template>
         <ng-template #emptymessage>
           <tr>
-            <td colspan="5" class="text-center p-4 text-muted">
+            <td colspan="6" class="text-center p-4 text-muted">
               No products yet. Click "Add Product" to create your first listing.
             </td>
           </tr>

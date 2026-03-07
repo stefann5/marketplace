@@ -1,0 +1,30 @@
+<nav class="flex items-center gap-4 bg-surface-0 border-b border-surface-200 px-4 py-2">
+  <div class="flex items-center gap-3 shrink-0">
+    <p-button icon="pi pi-bars" [text]="true" [rounded]="true" (onClick)="toggleDrawer()" />
+    <span class="text-xl font-bold cursor-pointer text-primary" (click)="goHome()">Marketplace</span>
+  </div>
+
+  <div class="flex-1">
+    <p-iconfield class="w-full">
+      <p-inputicon class="pi pi-search" />
+      <input type="text" pInputText placeholder="Search" class="w-full" />
+    </p-iconfield>
+  </div>
+
+  <div class="shrink-0">
+    @if (authService.isLoggedIn()) {
+      <div class="flex items-center gap-2">
+        @if (authService.getUserRole() === 'SELLER') {
+          <p-button label="Dashboard" icon="pi pi-th-large" [text]="true" routerLink="/dashboard/products" />
+        }
+        <p-button label="Logout" icon="pi pi-sign-out" [outlined]="true" (onClick)="logout()" />
+      </div>
+    } @else {
+      <p-button label="Login" icon="pi pi-sign-in" [outlined]="true" (onClick)="goToLogin()" />
+    }
+  </div>
+</nav>
+
+<p-drawer [(visible)]="drawerVisible" header="Categories" position="left" styleClass="w-80">
+  <p-tree [value]="categoryNodes" [filter]="true" filterPlaceholder="Filter categories" />
+</p-drawer>
