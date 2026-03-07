@@ -130,7 +130,7 @@ Buyers can leave a review on any product they have purchased. The Catalog Servic
 Platform-level hierarchical categories managed by the admin, pre-seeded by scraping a major marketplace (Amazon/Temu). Sellers assign their products to leaf categories only.
 
 ```sql
-category (id, name, parent_id, display_order)
+category (id, name, parent_id)
 ```
 
 - Hierarchical with recursive CTE for subtree queries

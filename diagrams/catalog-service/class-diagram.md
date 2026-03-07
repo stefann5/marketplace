@@ -29,7 +29,6 @@ classDiagram
         +UUID id
         +String name
         +UUID parentId
-        +int displayOrder
     }
 
     class Review {

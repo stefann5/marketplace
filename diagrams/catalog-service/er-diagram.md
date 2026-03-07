@@ -29,7 +29,6 @@ erDiagram
         uuid id PK
         string name
         uuid parent_id FK
-        int display_order
     }
 
     REVIEW {
