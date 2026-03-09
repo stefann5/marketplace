@@ -40,7 +40,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.categoryService.getTreeNodes().subscribe(nodes => {
-      this.categoryNodes = nodes;
+      this.categoryNodes = this.makeAllSelectable(nodes);
     });
     this.cartSub = this.cartService.itemCount$.subscribe(count => {
       this.cartItemCount = count;
@@ -80,5 +80,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
   onCategorySelect(event: any): void {
     this.drawerVisible = false;
     this.router.navigate(['/products/search'], { queryParams: { categoryId: event.node.data } });
+  }
+
+  private makeAllSelectable(nodes: TreeNode[]): TreeNode[] {
+    return nodes.map(node => ({
+      ...node,
+      selectable: true,
+      children: node.children ? this.makeAllSelectable(node.children) : undefined
+    }));
   }
 }

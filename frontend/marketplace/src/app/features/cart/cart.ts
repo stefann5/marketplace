@@ -2,12 +2,15 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { MessageModule } from 'primeng/message';
 import { CartService } from '../../core/services/cart.service';
 import { OrderService } from '../../core/services/order.service';
+import { ProductService } from '../../core/services/product.service';
 import { Cart, CartItem } from '../../core/models/cart.model';
+import { Product } from '../../core/models/product.model';
 
 @Component({
   selector: 'app-cart',
@@ -18,6 +21,7 @@ import { Cart, CartItem } from '../../core/models/cart.model';
 })
 export class CartComponent implements OnInit {
   cart: Cart | null = null;
+  productMap: Record<string, Product> = {};
   loading = false;
   checkoutLoading = false;
   errorMessage = '';
@@ -25,6 +29,7 @@ export class CartComponent implements OnInit {
   constructor(
     private cartService: CartService,
     private orderService: OrderService,
+    private productService: ProductService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -38,6 +43,27 @@ export class CartComponent implements OnInit {
     this.cartService.getCart().subscribe({
       next: cart => {
         this.cart = cart;
+        this.loadProductDetails(cart);
+      },
+      error: () => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private loadProductDetails(cart: Cart): void {
+    const newIds = cart.items
+      .map(i => i.productId)
+      .filter(id => !this.productMap[id]);
+    if (newIds.length === 0) {
+      this.loading = false;
+      this.cdr.markForCheck();
+      return;
+    }
+    forkJoin(newIds.map(id => this.productService.getById(id))).subscribe({
+      next: products => {
+        products.forEach(p => this.productMap[p.id] = p);
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -48,8 +74,11 @@ export class CartComponent implements OnInit {
     });
   }
 
-  updateQuantity(item: CartItem, quantity: number): void {
-    if (quantity < 1) return;
+  updateQuantity(item: CartItem, quantity: number | null): void {
+    if (!quantity || quantity < 1) {
+      this.removeItem(item);
+      return;
+    }
     this.cartService.updateItem(item.id, { quantity }).subscribe({
       next: cart => {
         this.cart = cart;

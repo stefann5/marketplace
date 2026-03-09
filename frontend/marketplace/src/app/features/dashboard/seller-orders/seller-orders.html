@@ -33,10 +33,32 @@
           <div class="flex flex-col gap-2">
             @for (item of order.items; track item.id) {
               <div class="flex items-center justify-between py-2 border-b border-surface-100 last:border-0">
-                <div>
-                  <span class="text-sm text-muted">{{ item.productId | slice:0:8 }}...</span>
-                  <span class="ml-2">x{{ item.quantity }}</span>
-                </div>
+                @if (productMap[item.productId]; as product) {
+                  <div class="flex items-center gap-3">
+                    @if (product.imageUrls.length) {
+                      <img [src]="product.imageUrls[0]" [alt]="product.name"
+                        class="w-10 h-10 object-cover rounded" />
+                    } @else {
+                      <div class="w-10 h-10 bg-surface-100 rounded flex items-center justify-center">
+                        <i class="pi pi-image text-muted"></i>
+                      </div>
+                    }
+                    <div>
+                      <div class="font-medium text-sm">{{ product.name }}</div>
+                      <span class="text-sm text-muted">x{{ item.quantity }}</span>
+                    </div>
+                  </div>
+                } @else {
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-surface-100 rounded flex items-center justify-center">
+                      <i class="pi pi-image text-muted"></i>
+                    </div>
+                    <div>
+                      <span class="text-sm text-muted">{{ item.productId | slice:0:8 }}...</span>
+                      <span class="ml-2">x{{ item.quantity }}</span>
+                    </div>
+                  </div>
+                }
                 <span class="font-medium">{{ item.unitPrice * item.quantity | currency:'USD' }}</span>
               </div>
             }

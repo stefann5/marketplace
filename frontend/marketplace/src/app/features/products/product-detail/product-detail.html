@@ -51,8 +51,21 @@
               <p class="text-muted leading-normal mt-2">{{ product.description }}</p>
 
               @if (authService.getUserRole() !== 'SELLER') {
-                <p-button icon="pi pi-shopping-cart" label="Add to Cart" [loading]="addingToCart"
-                  [disabled]="product.stock === 0" (onClick)="addToCart()" class="mt-4" />
+                @if (getCartQuantity() > 0) {
+                  <div class="flex items-center gap-2 mt-4">
+                    <p-button icon="pi pi-minus" [rounded]="true" [outlined]="true"
+                      (onClick)="changeQuantity(-1)" />
+                    <p-inputnumber [ngModel]="getCartQuantity()" [min]="0" [showButtons]="false"
+                      [inputStyle]="{width: '4rem', 'text-align': 'center'}"
+                      (onInput)="onManualQuantity($event.value)" />
+                    <p-button icon="pi pi-plus" [rounded]="true" [outlined]="true"
+                      (onClick)="changeQuantity(1)" />
+                    <span class="text-sm text-muted ml-2">in cart</span>
+                  </div>
+                } @else {
+                  <p-button icon="pi pi-shopping-cart" label="Add to Cart" [loading]="addingToCart"
+                    [disabled]="product.stock === 0" (onClick)="addToCart()" class="mt-4" />
+                }
               }
             </div>
           </div>

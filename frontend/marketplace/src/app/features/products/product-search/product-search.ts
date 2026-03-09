@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { DataViewModule } from 'primeng/dataview';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
@@ -16,6 +17,7 @@ import { CategoryService } from '../../../core/services/category.service';
 import { CartService } from '../../../core/services/cart.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Product } from '../../../core/models/product.model';
+import { Cart } from '../../../core/models/cart.model';
 
 interface SortOption {
   label: string;
@@ -32,7 +34,7 @@ interface SortOption {
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './product-search.html'
 })
-export class ProductSearchComponent implements OnInit {
+export class ProductSearchComponent implements OnInit, OnDestroy {
   products: Product[] = [];
   totalRecords = 0;
   rows = 20;
@@ -40,6 +42,8 @@ export class ProductSearchComponent implements OnInit {
   layout: 'list' | 'grid' = 'grid';
   layoutOptions: string[] = ['list', 'grid'];
   categoryMap = new Map<number, string>();
+  cart: Cart | null = null;
+  private cartSub?: Subscription;
 
   searchName = '';
   selectedCategoryNode: TreeNode | null = null;
@@ -78,6 +82,10 @@ export class ProductSearchComponent implements OnInit {
   ngOnInit(): void {
     this.categoryService.getCategoryMap().subscribe(map => {
       this.categoryMap = map;
+      this.cdr.markForCheck();
+    });
+    this.cartSub = this.cartService.cartState$.subscribe(cart => {
+      this.cart = cart;
       this.cdr.markForCheck();
     });
     this.categoryService.getTreeNodes().subscribe(nodes => {
@@ -207,5 +215,36 @@ export class ProductSearchComponent implements OnInit {
       quantity: 1,
       unitPrice: product.price
     }).subscribe();
+  }
+
+  getCartQuantity(productId: string): number {
+    return this.cart?.items.find(i => i.productId === productId)?.quantity ?? 0;
+  }
+
+  changeQuantity(event: Event, product: Product, delta: number): void {
+    event.stopPropagation();
+    const item = this.cart?.items.find(i => i.productId === product.id);
+    if (!item) return;
+    const newQty = item.quantity + delta;
+    if (newQty < 1) {
+      this.cartService.removeItem(item.id).subscribe();
+    } else {
+      this.cartService.updateItem(item.id, { quantity: newQty }).subscribe();
+    }
+  }
+
+  onManualQuantity(event: any, product: Product, value: any): void {
+    event?.originalEvent?.stopPropagation();
+    const item = this.cart?.items.find(i => i.productId === product.id);
+    if (!item || value == null) return;
+    if (value < 1) {
+      this.cartService.removeItem(item.id).subscribe();
+    } else {
+      this.cartService.updateItem(item.id, { quantity: value }).subscribe();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.cartSub?.unsubscribe();
   }
 }
