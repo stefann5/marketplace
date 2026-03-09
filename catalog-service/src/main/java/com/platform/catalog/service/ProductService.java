@@ -1,8 +1,6 @@
 package com.platform.catalog.service;
 
-import com.platform.catalog.dto.ProductRequest;
-import com.platform.catalog.dto.ProductResponse;
-import com.platform.catalog.dto.ProductSearchCriteria;
+import com.platform.catalog.dto.*;
 import com.platform.catalog.entity.Product;
 import com.platform.catalog.entity.ProductImage;
 import com.platform.catalog.exception.CatalogException;
@@ -22,7 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -149,6 +149,35 @@ public class ProductService {
     private Product getOwnedProduct(UUID id, UUID tenantId) {
         return productRepository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new CatalogException("Product not found", HttpStatus.NOT_FOUND));
+    }
+
+    @Transactional(readOnly = true)
+    public List<StockCheckResponse> checkStock(List<StockCheckRequest> requests) {
+        List<UUID> ids = requests.stream().map(StockCheckRequest::productId).toList();
+        Map<UUID, Product> products = productRepository.findAllByIdIn(ids).stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+
+        return requests.stream().map(req -> {
+            Product p = products.get(req.productId());
+            if (p == null) return new StockCheckResponse(req.productId(), 0, false);
+            return new StockCheckResponse(req.productId(), p.getStock(), p.getStock() >= req.requestedQuantity());
+        }).toList();
+    }
+
+    @Transactional
+    public void decrementStock(List<StockDecrementRequest> requests) {
+        List<UUID> ids = requests.stream().map(StockDecrementRequest::productId).toList();
+        Map<UUID, Product> products = productRepository.findAllByIdIn(ids).stream()
+                .collect(Collectors.toMap(Product::getId, Function.identity()));
+
+        for (StockDecrementRequest req : requests) {
+            Product p = products.get(req.productId());
+            if (p == null) throw new CatalogException("Product not found: " + req.productId(), HttpStatus.NOT_FOUND);
+            if (p.getStock() < req.quantity()) throw new CatalogException("Insufficient stock for product: " + req.productId(), HttpStatus.CONFLICT);
+            p.setStock(p.getStock() - req.quantity());
+            p.setPurchaseCount(p.getPurchaseCount() + req.quantity());
+        }
+        productRepository.saveAll(products.values());
     }
 
     private void applyFields(Product product, ProductRequest request) {

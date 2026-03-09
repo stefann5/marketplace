@@ -16,6 +16,7 @@ public class SellerRoleFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         String method = request.getMethod();
 
+        if (path.startsWith("/internal/")) return true;
         if (!path.startsWith("/api/products")) return true;
 
         if (path.equals("/api/products/seller") || path.startsWith("/api/products/seller?")) {
