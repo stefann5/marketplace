@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { sellerGuard } from './core/guards/seller.guard';
+import { buyerGuard } from './core/guards/buyer.guard';
 
 export const routes: Routes = [
   {
@@ -27,6 +28,28 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'cart',
+    loadComponent: () => import('./core/layout/buyer-layout').then(m => m.BuyerLayoutComponent),
+    canActivate: [authGuard, buyerGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/cart/cart').then(m => m.CartComponent)
+      }
+    ]
+  },
+  {
+    path: 'orders',
+    loadComponent: () => import('./core/layout/buyer-layout').then(m => m.BuyerLayoutComponent),
+    canActivate: [authGuard, buyerGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/orders/buyer-orders/buyer-orders').then(m => m.BuyerOrdersComponent)
+      }
+    ]
+  },
+  {
     path: 'dashboard',
     loadComponent: () => import('./core/layout/dashboard-layout').then(m => m.DashboardLayoutComponent),
     canActivate: [authGuard, sellerGuard],
@@ -43,6 +66,10 @@ export const routes: Routes = [
       {
         path: 'products/:id/edit',
         loadComponent: () => import('./features/dashboard/seller-product-form/seller-product-form').then(m => m.SellerProductFormComponent)
+      },
+      {
+        path: 'orders',
+        loadComponent: () => import('./features/dashboard/seller-orders/seller-orders').then(m => m.SellerOrdersComponent)
       }
     ]
   },

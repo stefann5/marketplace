@@ -18,6 +18,16 @@
         @if (authService.getUserRole() === 'SELLER') {
           <p-button label="Dashboard" icon="pi pi-th-large" [text]="true" routerLink="/dashboard/products" />
         }
+        @if (authService.getUserRole() === 'BUYER') {
+          <p-button icon="pi pi-list" label="Orders" [text]="true" routerLink="/orders" />
+          <p-button routerLink="/cart" [text]="true" [rounded]="true" styleClass="relative">
+            <i class="pi pi-shopping-cart text-xl"></i>
+            @if (cartItemCount > 0) {
+              <p-badge [value]="'' + cartItemCount" severity="danger"
+                styleClass="absolute" [style]="{ top: '0', right: '0', transform: 'translate(25%, -25%)' }" />
+            }
+          </p-button>
+        }
         <p-button label="Logout" icon="pi pi-sign-out" [outlined]="true" (onClick)="logout()" />
       </div>
     } @else {
