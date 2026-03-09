@@ -8,6 +8,8 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { ProductService } from '../../../core/services/product.service';
 import { CategoryService } from '../../../core/services/category.service';
+import { CartService } from '../../../core/services/cart.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Product } from '../../../core/models/product.model';
 
 @Component({
@@ -29,6 +31,8 @@ export class ProductListComponent implements OnInit {
   constructor(
     private productService: ProductService,
     private categoryService: CategoryService,
+    private cartService: CartService,
+    private authService: AuthService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -73,5 +77,23 @@ export class ProductListComponent implements OnInit {
     if (stock > 10) return 'In Stock';
     if (stock > 0) return 'Low Stock';
     return 'Out of Stock';
+  }
+
+  addToCart(event: Event, product: Product): void {
+    event.stopPropagation();
+    if (!this.authService.isLoggedIn()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    this.cartService.addItem({
+      productId: product.id,
+      tenantId: product.tenantId,
+      quantity: 1,
+      unitPrice: product.price
+    }).subscribe();
+  }
+
+  isBuyer(): boolean {
+    return this.authService.getUserRole() !== 'SELLER';
   }
 }

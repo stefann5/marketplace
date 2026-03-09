@@ -13,6 +13,8 @@ import { InputNumberModule } from 'primeng/inputnumber';
 import { TreeNode } from 'primeng/api';
 import { ProductService } from '../../../core/services/product.service';
 import { CategoryService } from '../../../core/services/category.service';
+import { CartService } from '../../../core/services/cart.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { Product } from '../../../core/models/product.model';
 
 interface SortOption {
@@ -66,6 +68,8 @@ export class ProductSearchComponent implements OnInit {
   constructor(
     private productService: ProductService,
     private categoryService: CategoryService,
+    private cartService: CartService,
+    private authService: AuthService,
     private route: ActivatedRoute,
     private router: Router,
     private cdr: ChangeDetectorRef
@@ -189,5 +193,19 @@ export class ProductSearchComponent implements OnInit {
       selectable: true,
       children: node.children ? this.makeAllSelectable(node.children) : undefined
     }));
+  }
+
+  addToCart(event: Event, product: Product): void {
+    event.stopPropagation();
+    if (!this.authService.isLoggedIn()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    this.cartService.addItem({
+      productId: product.id,
+      tenantId: product.tenantId,
+      quantity: 1,
+      unitPrice: product.price
+    }).subscribe();
   }
 }

@@ -49,6 +49,11 @@
               <p-tag [value]="getStockLabel(product.stock)" [severity]="getStockSeverity(product.stock)" class="w-fit" />
 
               <p class="text-muted leading-normal mt-2">{{ product.description }}</p>
+
+              @if (authService.getUserRole() !== 'SELLER') {
+                <p-button icon="pi pi-shopping-cart" label="Add to Cart" [loading]="addingToCart"
+                  [disabled]="product.stock === 0" (onClick)="addToCart()" class="mt-4" />
+              }
             </div>
           </div>
         </div>
