@@ -39,6 +39,18 @@ services:
     networks:
       - internal
 
+  order-service:
+    build: ./order-service
+    environment:
+      DB_URL: jdbc:postgresql://host.docker.internal:5432/order_db
+      DB_USER: postgres
+      DB_PASS: admin
+      CATALOG_SERVICE_URL: http://catalog-service:8082
+    depends_on:
+      - catalog-service
+    networks:
+      - internal
+
   api-gateway:
     build: ./api-gateway
     ports:
@@ -54,6 +66,7 @@ services:
     depends_on:
       - auth-service
       - catalog-service
+      - order-service
     networks:
       - internal
 
