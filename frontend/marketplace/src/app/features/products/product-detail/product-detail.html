@@ -1,6 +1,7 @@
 @if (product) {
   <div class="bg-ground min-h-screen p-4">
     <div class="max-w-[60rem] mx-auto">
+      <p-toast />
       <p-button icon="pi pi-arrow-left" label="Back to Products" [text]="true" (onClick)="goBack()" class="mb-4" />
 
       <div class="bg-surface-0 rounded-lg p-5">
@@ -70,6 +71,66 @@
             </div>
           </div>
         </div>
+      </div>
+
+      @if (authService.isLoggedIn() && authService.getUserRole() === 'BUYER') {
+        <div class="bg-surface-0 rounded-lg p-5 mt-4">
+          <h2 class="text-xl font-bold text-content m-0 mb-4">
+            {{ isEditMode ? 'Edit Your Review' : 'Write a Review' }}
+          </h2>
+          <div class="flex flex-col gap-3">
+            <div>
+              <label class="block text-sm font-medium text-content mb-1">Rating</label>
+              <p-rating [(ngModel)]="reviewRating" [stars]="5" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-content mb-1">Comment (optional)</label>
+              <textarea pTextarea [(ngModel)]="reviewComment" [rows]="3" class="w-full"
+                placeholder="Share your experience..."></textarea>
+            </div>
+            @if (reviewFormError) {
+              <small class="text-red-500">{{ reviewFormError }}</small>
+            }
+            <div>
+              <p-button [label]="isEditMode ? 'Update Review' : 'Submit Review'"
+                icon="pi pi-check" [loading]="submittingReview"
+                [disabled]="reviewRating < 1" (onClick)="submitReview()" />
+            </div>
+          </div>
+        </div>
+      }
+
+      <div class="bg-surface-0 rounded-lg p-5 mt-4">
+        <h2 class="text-xl font-bold text-content m-0 mb-4">Reviews ({{ reviewsTotalRecords }})</h2>
+        @if (reviews.length) {
+          <p-dataview [value]="reviews" [paginator]="true" [rows]="reviewsRows"
+            [totalRecords]="reviewsTotalRecords" [lazy]="true" (onLazyLoad)="onReviewPageChange($event)"
+            [first]="reviewsPage * reviewsRows">
+            <ng-template #list let-reviews>
+              <div class="flex flex-col">
+                @for (review of reviews; track review.id) {
+                  <div class="flex flex-col gap-1 py-4 border-b border-surface-200 last:border-b-0">
+                    <div class="flex items-center gap-2">
+                      <div class="flex items-center gap-0.5">
+                        @for (star of getStarArray(review.rating); track $index) {
+                          <i class="pi text-sm" [class.pi-star-fill]="star" [class.pi-star]="!star"
+                            [class.text-yellow-500]="star" [class.text-surface-200]="!star"></i>
+                        }
+                      </div>
+                      <span class="text-sm font-medium text-content">{{ review.buyerName }}</span>
+                      <span class="text-sm text-muted">{{ review.createdAt | date:'mediumDate' }}</span>
+                    </div>
+                    @if (review.comment) {
+                      <p class="text-content m-0 mt-1">{{ review.comment }}</p>
+                    }
+                  </div>
+                }
+              </div>
+            </ng-template>
+          </p-dataview>
+        } @else {
+          <p class="text-muted">No reviews yet.</p>
+        }
       </div>
     </div>
   </div>
