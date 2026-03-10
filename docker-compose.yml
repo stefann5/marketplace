@@ -24,8 +24,6 @@ services:
       AUTH_SERVICE_URL: http://auth-service:8081
     depends_on:
       - minio
-      - auth-service
-      - order-service
     networks:
       - internal
 

@@ -31,7 +31,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private static final List<String> PUBLIC_GET_PATHS = List.of(
             "/api/products",
-            "/api/reviews"
+            "/api/reviews",
+            "/api/categories"
     );
 
     public JwtAuthenticationFilter(@Value("${jwt.secret}") String secret) {
@@ -92,6 +93,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private boolean isPublicGetPath(String path) {
         if (path.startsWith("/api/products/seller")) return false;
+        if (path.endsWith("/mine")) return false;
         return PUBLIC_GET_PATHS.stream().anyMatch(path::startsWith);
     }
 
