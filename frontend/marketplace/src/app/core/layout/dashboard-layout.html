@@ -14,6 +14,11 @@
         <i class="pi pi-shopping-bag"></i>
         Orders
       </a>
+      <a routerLink="/dashboard/theme" routerLinkActive="bg-primary/10 text-primary"
+         class="flex items-center gap-3 px-3 py-2 rounded text-content no-underline font-medium hover:bg-surface-100 transition-colors">
+        <i class="pi pi-palette"></i>
+        Theme
+      </a>
     </nav>
     <div class="p-3 border-t border-surface-200">
       <p-button label="Logout" icon="pi pi-sign-out" [text]="true" styleClass="w-full" (onClick)="logout()" />

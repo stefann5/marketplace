@@ -3,6 +3,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { sellerGuard } from './core/guards/seller.guard';
 import { buyerGuard } from './core/guards/buyer.guard';
+import { adminGuard } from './core/guards/admin.guard';
 
 export const routes: Routes = [
   {
@@ -50,6 +51,11 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'onboarding',
+    loadComponent: () => import('./features/onboarding/seller-onboarding').then(m => m.SellerOnboardingComponent),
+    canActivate: [authGuard, sellerGuard]
+  },
+  {
     path: 'dashboard',
     loadComponent: () => import('./core/layout/dashboard-layout').then(m => m.DashboardLayoutComponent),
     canActivate: [authGuard, sellerGuard],
@@ -70,8 +76,32 @@ export const routes: Routes = [
       {
         path: 'orders',
         loadComponent: () => import('./features/dashboard/seller-orders/seller-orders').then(m => m.SellerOrdersComponent)
+      },
+      {
+        path: 'theme',
+        loadComponent: () => import('./features/dashboard/seller-theme/seller-theme').then(m => m.SellerThemeComponent)
       }
     ]
+  },
+  {
+    path: 'admin',
+    loadComponent: () => import('./features/admin/admin-layout').then(m => m.AdminLayoutComponent),
+    canActivate: [authGuard, adminGuard],
+    children: [
+      { path: '', redirectTo: 'sellers', pathMatch: 'full' },
+      {
+        path: 'sellers',
+        loadComponent: () => import('./features/admin/seller-list/seller-list').then(m => m.SellerListComponent)
+      },
+      {
+        path: 'sellers/:id',
+        loadComponent: () => import('./features/admin/seller-detail/seller-detail').then(m => m.SellerDetailComponent)
+      }
+    ]
+  },
+  {
+    path: 'shop/:slug',
+    loadComponent: () => import('./features/shop/seller-shop').then(m => m.SellerShopComponent)
   },
   {
     path: 'login',

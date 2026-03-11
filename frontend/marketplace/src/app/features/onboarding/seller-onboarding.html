@@ -1,0 +1,147 @@
+<p-toast />
+
+<div class="flex items-center justify-center min-h-screen bg-ground p-4">
+  <p-card class="w-full max-w-[50rem]">
+    <ng-template #header>
+      <div class="text-center p-6 pb-0">
+        <h2 class="text-2xl font-bold m-0">Seller Onboarding</h2>
+        <p class="text-muted mt-2">Complete your seller profile to start selling</p>
+      </div>
+    </ng-template>
+
+    <p-stepper [value]="1" [linear]="true">
+      <p-step-list>
+        <p-step [value]="1">Company Profile</p-step>
+        <p-step [value]="2">Documents & Logo</p-step>
+        <p-step [value]="3">Review & Submit</p-step>
+      </p-step-list>
+      <p-step-panels>
+        <p-step-panel [value]="1">
+          <ng-template #content let-activateCallback="activateCallback">
+            <form [formGroup]="profileForm" class="flex flex-col gap-5 p-4">
+              <p-floatlabel variant="on">
+                <input pInputText id="companyName" formControlName="companyName" class="w-full" />
+                <label for="companyName">Company Name *</label>
+              </p-floatlabel>
+
+              <p-floatlabel variant="on">
+                <textarea pTextarea id="description" formControlName="description" rows="4" class="w-full"></textarea>
+                <label for="description">Company Description *</label>
+              </p-floatlabel>
+
+              <p-floatlabel variant="on">
+                <input pInputText id="contactPhone" formControlName="contactPhone" class="w-full" />
+                <label for="contactPhone">Contact Phone *</label>
+              </p-floatlabel>
+
+              <p-floatlabel variant="on">
+                <input pInputText id="contactEmail" formControlName="contactEmail" class="w-full" />
+                <label for="contactEmail">Contact Email *</label>
+              </p-floatlabel>
+
+              <p-floatlabel variant="on">
+                <input pInputText id="contactAddress" formControlName="contactAddress" class="w-full" />
+                <label for="contactAddress">Contact Address (optional)</label>
+              </p-floatlabel>
+            </form>
+
+            <div class="flex pt-4 justify-end px-4">
+              <p-button label="Next" icon="pi pi-arrow-right" iconPos="right"
+                [disabled]="profileForm.invalid" (onClick)="activateCallback(2)" />
+            </div>
+          </ng-template>
+        </p-step-panel>
+
+        <p-step-panel [value]="2">
+          <ng-template #content let-activateCallback="activateCallback">
+            <div class="flex flex-col gap-6 p-4">
+              <div>
+                <label class="block font-semibold mb-2">Company Logo</label>
+                <p-fileupload mode="basic" chooseLabel="Choose Logo" chooseIcon="pi pi-image"
+                  accept="image/*" [maxFileSize]="5000000" [auto]="false" [customUpload]="true"
+                  (onSelect)="onLogoSelect($event)" />
+                @if (logoPreview) {
+                  <div class="mt-3 flex items-center gap-3">
+                    <img [src]="logoPreview" alt="Logo preview" class="w-16 h-16 object-cover rounded" />
+                    <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger" (onClick)="onLogoRemove()" />
+                  </div>
+                }
+              </div>
+
+              <div>
+                <label class="block font-semibold mb-2">Business Documents</label>
+                <p class="text-muted text-sm mb-2">Upload business registration, tax certificates, or other relevant documents.</p>
+                <p-fileupload [multiple]="true" [auto]="false" [customUpload]="true"
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" [maxFileSize]="10000000"
+                  (onSelect)="onDocumentsSelect($event)" (onRemove)="onDocumentRemove($event)"
+                  (onClear)="onDocumentsClear()">
+                  <ng-template #empty>
+                    <div class="flex items-center justify-center flex-col py-6">
+                      <i class="pi pi-cloud-upload text-4xl text-muted mb-2"></i>
+                      <p class="text-muted">Drag and drop files here</p>
+                    </div>
+                  </ng-template>
+                </p-fileupload>
+              </div>
+            </div>
+
+            <div class="flex pt-4 justify-between px-4">
+              <p-button label="Back" severity="secondary" icon="pi pi-arrow-left" (onClick)="activateCallback(1)" />
+              <p-button label="Next" icon="pi pi-arrow-right" iconPos="right" (onClick)="activateCallback(3)" />
+            </div>
+          </ng-template>
+        </p-step-panel>
+
+        <p-step-panel [value]="3">
+          <ng-template #content let-activateCallback="activateCallback">
+            <div class="p-4">
+              <h3 class="text-lg font-semibold mb-4">Review Your Information</h3>
+
+              <div class="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <span class="text-muted text-sm">Company Name</span>
+                  <p class="font-medium">{{ profileForm.get('companyName')?.value }}</p>
+                </div>
+                <div>
+                  <span class="text-muted text-sm">Contact Phone</span>
+                  <p class="font-medium">{{ profileForm.get('contactPhone')?.value }}</p>
+                </div>
+                <div>
+                  <span class="text-muted text-sm">Contact Email</span>
+                  <p class="font-medium">{{ profileForm.get('contactEmail')?.value }}</p>
+                </div>
+                <div>
+                  <span class="text-muted text-sm">Contact Address</span>
+                  <p class="font-medium">{{ profileForm.get('contactAddress')?.value || '—' }}</p>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <span class="text-muted text-sm">Description</span>
+                <p class="font-medium">{{ profileForm.get('description')?.value }}</p>
+              </div>
+
+              <div class="flex gap-6 mb-4">
+                @if (logoPreview) {
+                  <div>
+                    <span class="text-muted text-sm block mb-1">Logo</span>
+                    <img [src]="logoPreview" alt="Logo" class="w-16 h-16 object-cover rounded" />
+                  </div>
+                }
+                <div>
+                  <span class="text-muted text-sm block mb-1">Documents</span>
+                  <p class="font-medium">{{ documents.length }} file(s) attached</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex pt-4 justify-between px-4">
+              <p-button label="Back" severity="secondary" icon="pi pi-arrow-left" (onClick)="activateCallback(2)" />
+              <p-button label="Submit" icon="pi pi-check" [loading]="loading" (onClick)="submit()" />
+            </div>
+          </ng-template>
+        </p-step-panel>
+      </p-step-panels>
+    </p-stepper>
+  </p-card>
+</div>

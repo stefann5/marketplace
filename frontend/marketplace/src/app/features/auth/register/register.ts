@@ -65,17 +65,10 @@ export class RegisterComponent {
 
     this.authService.register(email, password, confirmPassword, role).subscribe({
       next: (res) => {
-        if (res.sellerStatus === 'PENDING') {
-          this.loading = false;
-          this.messageService.add({
-            severity: 'info',
-            summary: 'Account Created',
-            detail: 'Your seller account is pending admin approval. You can log in once approved.',
-            life: 5000
-          });
-          setTimeout(() => this.router.navigate(['/login']), 3000);
+        this.authService.storeTokens(res);
+        if (role === 'SELLER') {
+          this.router.navigate(['/onboarding']);
         } else {
-          this.authService.storeTokens(res);
           this.router.navigate(['/']);
         }
       },

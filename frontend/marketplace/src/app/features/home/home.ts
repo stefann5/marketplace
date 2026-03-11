@@ -14,6 +14,8 @@ export class HomeComponent implements OnInit {
     const role = this.authService.getUserRole();
     if (role === 'SELLER') {
       this.router.navigate(['/dashboard/products']);
+    } else if (role === 'ADMIN') {
+      this.router.navigate(['/admin/sellers']);
     } else {
       this.router.navigate(['/products']);
     }
