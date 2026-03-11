@@ -159,20 +159,22 @@ category (id, name, parent_id)
 **Responsibility:** Seller identity, onboarding, storefront customization, and admin operations.
 
 **Seller management:**
-- Seller onboarding: profile creation with company document upload
+- Seller onboarding: profile creation with company name, description, contact info (phone, email, address), logo, and document upload
+- Documents stored in MinIO with private access (presigned URLs for viewing)
 - Seller status lifecycle: PENDING_APPROVAL → ACTIVE / REJECTED (admin can also SUSPEND)
-- Seller profile: company name, description, contact info, logo
+- Seller profile: company name, description, contact phone, contact email, contact address (optional), logo
 - Shop URL slug: `platform.com/shop/:sellerSlug`
 
 **Storefront customization:**
-- PrimeNG theme preset selection (Lara Light, Lara Dark, Aura, etc.)
-- Custom colors (primary, accent), font family, border radius
+- PrimeNG theme preset selection via palette picker (amber, blue, green, indigo, etc.)
+- Dynamic theme switching using `updatePrimaryPalette()` from `@primeuix/themes`
+- Custom font family and border radius
 - Shop banner and logo
 
 Theme configuration stored in PostgreSQL:
 
 ```
-seller_theme (seller_id, preset, primary_color, accent_color, font_family, border_radius, banner_url, logo_url)
+seller_theme (seller_id, preset, primary_color, font_family, border_radius, banner_url, logo_url)
 ```
 
 **Admin endpoints (role-guarded):**

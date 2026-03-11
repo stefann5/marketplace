@@ -5,19 +5,25 @@ classDiagram
     class SellerProfile {
         +UUID id
         +UUID userId
+        +UUID tenantId
         +String companyName
         +String description
-        +String contactInfo
-        +String logoUrl
         +String slug
+        +String contactPhone
+        +String contactEmail
+        +String contactAddress
+        +String logoUrl
         +SellerStatus status
         +LocalDateTime createdAt
+        +LocalDateTime updatedAt
     }
 
     class SellerDocument {
         +UUID id
         +UUID sellerId
+        +String fileName
         +String objectKey
+        +String contentType
         +LocalDateTime uploadedAt
     }
 
@@ -25,7 +31,6 @@ classDiagram
         +UUID sellerId
         +String preset
         +String primaryColor
-        +String accentColor
         +String fontFamily
         +String borderRadius
         +String bannerUrl
@@ -41,36 +46,54 @@ classDiagram
     }
 
     class SellerController {
-        +registerSeller(SellerRequest) SellerProfile
+        +registerSeller(MultipartFile[], SellerRegistrationRequest) SellerProfile
+        +getMyProfile() SellerProfile
+        +updateProfile(UpdateProfileRequest) SellerProfile
+        +updateLogo(MultipartFile) SellerProfile
         +getSellerBySlug(String slug) SellerProfile
-        +updateProfile(SellerProfileRequest) SellerProfile
-        +getTheme(UUID sellerId) SellerTheme
+        +getTheme() SellerTheme
         +updateTheme(ThemeRequest) SellerTheme
     }
 
-    class AdminController {
-        +getPendingApplications() List~SellerProfile~
-        +getAllSellers() List~SellerProfile~
+    class AdminSellerController {
+        +listSellers(SellerStatus) List~SellerProfile~
+        +getSellerDetail(UUID) SellerProfile
         +approveSeller(UUID) SellerProfile
         +rejectSeller(UUID) SellerProfile
         +suspendSeller(UUID) SellerProfile
+    }
+
+    class InternalSellerController {
+        +getSellerStatus(UUID userId) String
     }
 
     class SellerService {
-        +registerSeller(SellerRequest) SellerProfile
-        +getSellerBySlug(String) SellerProfile
-        +getSellerById(UUID) SellerProfile
-        +updateProfile(SellerProfileRequest) SellerProfile
+        +register(SellerRegistrationRequest, MultipartFile[], MultipartFile, String, String) SellerProfile
+        +getByUserId(UUID) SellerProfile
+        +getBySlug(String) SellerProfile
+        +updateProfile(UUID, UpdateProfileRequest) SellerProfile
+        +updateLogo(UUID, MultipartFile) SellerProfile
         +getTheme(UUID) SellerTheme
-        +updateTheme(ThemeRequest) SellerTheme
-        +approveSeller(UUID) SellerProfile
-        +rejectSeller(UUID) SellerProfile
-        +suspendSeller(UUID) SellerProfile
+        +updateTheme(UUID, ThemeRequest) SellerTheme
+        +listByStatus(SellerStatus) List~SellerProfile~
+        +getById(UUID) SellerProfile
+        +approve(UUID) SellerProfile
+        +reject(UUID) SellerProfile
+        +suspend(UUID) SellerProfile
+        +getStatusByUserId(UUID) String
+    }
+
+    class MinioService {
+        +uploadDocument(String, MultipartFile) String
+        +uploadLogo(String, MultipartFile) String
+        +getPresignedUrl(String) String
     }
 
     SellerProfile "1" --> "0..*" SellerDocument
     SellerProfile "1" --> "1" SellerTheme
     SellerProfile "*" --> "1" SellerStatus
     SellerController "1" --> "1" SellerService
-    AdminController "1" --> "1" SellerService
+    AdminSellerController "1" --> "1" SellerService
+    InternalSellerController "1" --> "1" SellerService
+    SellerService "1" --> "1" MinioService
 ```

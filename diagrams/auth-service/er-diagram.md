@@ -8,7 +8,6 @@ erDiagram
         string password_hash
         string role
         uuid tenant_id
-        string seller_status
         timestamp created_at
     }
 
