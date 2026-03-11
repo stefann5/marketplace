@@ -1,0 +1,63 @@
+<p-toast />
+
+<div class="p-6">
+  <h1 class="text-2xl font-bold mb-6">Shop Theme</h1>
+
+  @if (loading) {
+    <div class="flex items-center justify-center p-12">
+      <i class="pi pi-spin pi-spinner text-4xl"></i>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <p-card>
+        <ng-template #header>
+          <div class="p-4 pb-0">
+            <h3 class="text-lg font-semibold m-0">Color Palette</h3>
+            <p class="text-muted text-sm mt-1">Choose a primary color for your shop</p>
+          </div>
+        </ng-template>
+        <div class="flex flex-col gap-5">
+          <p-select [options]="presetOptions" [(ngModel)]="theme.preset" optionLabel="label" optionValue="value"
+            (onChange)="onPresetChange()" class="w-full" />
+
+          <div>
+            <p-floatlabel variant="on">
+              <input pInputText id="fontFamily" [(ngModel)]="theme.fontFamily" class="w-full" />
+              <label for="fontFamily">Font Family (optional)</label>
+            </p-floatlabel>
+          </div>
+
+          <div>
+            <p-floatlabel variant="on">
+              <input pInputText id="borderRadius" [(ngModel)]="theme.borderRadius" class="w-full" />
+              <label for="borderRadius">Border Radius (optional, e.g. 8px)</label>
+            </p-floatlabel>
+          </div>
+        </div>
+      </p-card>
+
+      <p-card>
+        <ng-template #header>
+          <div class="p-4 pb-0">
+            <h3 class="text-lg font-semibold m-0">Preview</h3>
+          </div>
+        </ng-template>
+        <div class="flex flex-col gap-4">
+          <div class="flex gap-2">
+            <p-button label="Primary" />
+            <p-button label="Secondary" severity="secondary" />
+            <p-button label="Success" severity="success" />
+          </div>
+          <div class="p-4 bg-primary/10 rounded">
+            <p class="font-semibold text-primary m-0">This is how your shop accent will look</p>
+            <p class="text-muted text-sm mt-1">Buyers will see this color scheme when visiting your shop page.</p>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <div class="mt-6">
+      <p-button label="Save Theme" icon="pi pi-save" [loading]="saving" (onClick)="save()" />
+    </div>
+  }
+</div>

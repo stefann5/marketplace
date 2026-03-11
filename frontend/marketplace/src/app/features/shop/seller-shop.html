@@ -1,0 +1,67 @@
+<app-navbar />
+
+@if (loading) {
+  <div class="flex items-center justify-center min-h-[60vh]">
+    <i class="pi pi-spin pi-spinner text-4xl"></i>
+  </div>
+} @else if (seller) {
+  <div class="bg-primary/5 py-12">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="flex items-center gap-6">
+        @if (seller.logoUrl) {
+          <img [src]="seller.logoUrl" alt="Logo" class="w-24 h-24 object-cover rounded-full border-4 border-primary/20" />
+        } @else {
+          <div class="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
+            <i class="pi pi-building text-4xl text-primary"></i>
+          </div>
+        }
+        <div>
+          <h1 class="text-3xl font-bold m-0">{{ seller.companyName }}</h1>
+          <p class="text-muted mt-2 max-w-2xl">{{ seller.description }}</p>
+          <div class="flex gap-4 mt-3 text-sm text-muted">
+            @if (seller.contactEmail) {
+              <span><i class="pi pi-envelope mr-1"></i>{{ seller.contactEmail }}</span>
+            }
+            @if (seller.contactPhone) {
+              <span><i class="pi pi-phone mr-1"></i>{{ seller.contactPhone }}</span>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto px-6 py-8">
+    <h2 class="text-xl font-semibold mb-6">Products</h2>
+
+    @if (products.length === 0) {
+      <div class="text-center py-12 text-muted">
+        <i class="pi pi-box text-4xl mb-3"></i>
+        <p>This seller has no products yet.</p>
+      </div>
+    } @else {
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        @for (product of products; track product.id) {
+          <p-card styleClass="cursor-pointer hover:shadow-lg transition-shadow" (click)="viewProduct(product)">
+            @if (product.imageUrls?.length) {
+              <ng-template #header>
+                <img [src]="product.imageUrls[0]" [alt]="product.name" class="w-full h-48 object-cover" />
+              </ng-template>
+            }
+            <div>
+              <h3 class="font-semibold text-base m-0 truncate">{{ product.name }}</h3>
+              <p class="text-primary font-bold text-lg mt-1 mb-0">${{ product.price | number:'1.2-2' }}</p>
+              @if (product.averageRating > 0) {
+                <div class="flex items-center gap-1 mt-1 text-sm text-muted">
+                  <i class="pi pi-star-fill text-amber-500"></i>
+                  {{ product.averageRating | number:'1.1-1' }}
+                  <span>({{ product.reviewCount }})</span>
+                </div>
+              }
+            </div>
+          </p-card>
+        }
+      </div>
+    }
+  </div>
+}
