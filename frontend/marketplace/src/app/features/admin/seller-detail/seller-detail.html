@@ -1,0 +1,105 @@
+<p-toast />
+<p-confirmDialog />
+
+@if (loading) {
+  <div class="flex items-center justify-center p-12">
+    <i class="pi pi-spin pi-spinner text-4xl"></i>
+  </div>
+} @else if (seller) {
+  <div class="p-6">
+    <div class="flex items-center gap-3 mb-6">
+      <p-button icon="pi pi-arrow-left" [rounded]="true" [text]="true" (onClick)="goBack()" />
+      <h1 class="text-2xl font-bold m-0">{{ seller.companyName }}</h1>
+      <p-tag [value]="getStatusLabel(seller.status)" [severity]="getStatusSeverity(seller.status)" />
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <p-card>
+        <ng-template #header>
+          <div class="p-4 pb-0">
+            <h3 class="text-lg font-semibold m-0">Company Information</h3>
+          </div>
+        </ng-template>
+        <div class="flex flex-col gap-4">
+          @if (seller.logoUrl) {
+            <div>
+              <span class="text-muted text-sm">Logo</span>
+              <div class="mt-1">
+                <img [src]="seller.logoUrl" alt="Company logo" class="w-20 h-20 object-cover rounded" />
+              </div>
+            </div>
+          }
+          <div>
+            <span class="text-muted text-sm">Description</span>
+            <p class="mt-1">{{ seller.description }}</p>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <span class="text-muted text-sm">Phone</span>
+              <p class="mt-1 font-medium">{{ seller.contactPhone }}</p>
+            </div>
+            <div>
+              <span class="text-muted text-sm">Email</span>
+              <p class="mt-1 font-medium">{{ seller.contactEmail }}</p>
+            </div>
+          </div>
+          @if (seller.contactAddress) {
+            <div>
+              <span class="text-muted text-sm">Address</span>
+              <p class="mt-1 font-medium">{{ seller.contactAddress }}</p>
+            </div>
+          }
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <span class="text-muted text-sm">Slug</span>
+              <p class="mt-1 font-medium">{{ seller.slug }}</p>
+            </div>
+            <div>
+              <span class="text-muted text-sm">Created</span>
+              <p class="mt-1 font-medium">{{ seller.createdAt | date:'medium' }}</p>
+            </div>
+          </div>
+        </div>
+      </p-card>
+
+      <p-card>
+        <ng-template #header>
+          <div class="p-4 pb-0">
+            <h3 class="text-lg font-semibold m-0">Documents</h3>
+          </div>
+        </ng-template>
+        @if (seller.documents.length === 0) {
+          <p class="text-muted">No documents uploaded.</p>
+        } @else {
+          <div class="flex flex-col gap-3">
+            @for (doc of seller.documents; track doc.id) {
+              <div class="flex items-center gap-3 p-3 bg-surface-50 rounded">
+                <i class="pi pi-file text-xl text-primary"></i>
+                <div class="flex-1">
+                  <p class="font-medium m-0">{{ doc.fileName }}</p>
+                  <span class="text-muted text-sm">{{ doc.contentType }}</span>
+                </div>
+                <a [href]="doc.url" target="_blank" class="no-underline">
+                  <p-button icon="pi pi-download" [rounded]="true" [text]="true" />
+                </a>
+              </div>
+            }
+          </div>
+        }
+      </p-card>
+    </div>
+
+    <div class="flex gap-3 mt-6">
+      @if (seller.status === 'PENDING_APPROVAL') {
+        <p-button label="Approve" icon="pi pi-check" severity="success" [loading]="actionLoading" (onClick)="approve()" />
+        <p-button label="Reject" icon="pi pi-times" severity="danger" [loading]="actionLoading" (onClick)="reject()" />
+      }
+      @if (seller.status === 'ACTIVE') {
+        <p-button label="Suspend" icon="pi pi-ban" severity="warn" [loading]="actionLoading" (onClick)="suspend()" />
+      }
+      @if (seller.status === 'SUSPENDED') {
+        <p-button label="Reactivate" icon="pi pi-check" severity="success" [loading]="actionLoading" (onClick)="approve()" />
+      }
+    </div>
+  </div>
+}
