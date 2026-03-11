@@ -2,7 +2,6 @@ package com.platform.auth.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.platform.auth.enums.Role;
-import com.platform.auth.enums.SellerStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,9 +33,6 @@ public class User {
     private Role role;
 
     private UUID tenantId;
-
-    @Enumerated(EnumType.STRING)
-    private SellerStatus sellerStatus;
 
     private LocalDateTime createdAt;
 

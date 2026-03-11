@@ -6,7 +6,6 @@ import com.platform.auth.dto.RegisterRequest;
 import com.platform.auth.entity.RefreshToken;
 import com.platform.auth.entity.User;
 import com.platform.auth.enums.Role;
-import com.platform.auth.enums.SellerStatus;
 import com.platform.auth.exception.AuthException;
 import com.platform.auth.repository.RefreshTokenRepository;
 import com.platform.auth.repository.UserRepository;
@@ -28,6 +27,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final SellerClient sellerClient;
 
     @Value("${jwt.refresh-expiry-ms}")
     private long refreshExpiryMs;
@@ -51,14 +51,9 @@ public class AuthService {
 
         if (request.role() == Role.SELLER) {
             user.setTenantId(UUID.randomUUID());
-            user.setSellerStatus(SellerStatus.PENDING);
         }
 
         userRepository.save(user);
-
-        if (user.getRole() == Role.SELLER) {
-            return JwtResponse.of(null, null, user.getSellerStatus());
-        }
 
         return issueTokenPair(user);
     }
@@ -72,11 +67,15 @@ public class AuthService {
             throw new AuthException("Invalid credentials");
         }
 
-        if (user.getRole() == Role.SELLER && user.getSellerStatus() == SellerStatus.PENDING) {
-            throw new AuthException("Your seller account is pending admin approval", HttpStatus.FORBIDDEN);
-        }
-        if (user.getRole() == Role.SELLER && user.getSellerStatus() == SellerStatus.REJECTED) {
-            throw new AuthException("Your seller account has been rejected", HttpStatus.FORBIDDEN);
+        if (user.getRole() == Role.SELLER) {
+            String status = sellerClient.getSellerStatus(user.getId());
+            switch (status) {
+                case "NOT_REGISTERED" -> throw new AuthException("Please complete your seller onboarding", HttpStatus.FORBIDDEN);
+                case "PENDING_APPROVAL" -> throw new AuthException("Your seller account is pending admin approval", HttpStatus.FORBIDDEN);
+                case "REJECTED" -> throw new AuthException("Your seller account has been rejected", HttpStatus.FORBIDDEN);
+                case "SUSPENDED" -> throw new AuthException("Your seller account has been suspended", HttpStatus.FORBIDDEN);
+                default -> {}
+            }
         }
 
         return issueTokenPair(user);
@@ -105,6 +104,11 @@ public class AuthService {
         refreshToken.setExpiresAt(LocalDateTime.now().plusSeconds(refreshExpiryMs / 1000));
         refreshTokenRepository.save(refreshToken);
 
-        return JwtResponse.of(accessToken, refreshToken.getToken(), user.getSellerStatus());
+        String sellerStatus = null;
+        if (user.getRole() == Role.SELLER) {
+            sellerStatus = sellerClient.getSellerStatus(user.getId());
+        }
+
+        return JwtResponse.of(accessToken, refreshToken.getToken(), sellerStatus);
     }
 }
