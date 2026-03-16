@@ -31,6 +31,16 @@ public class SellerController {
                 .body(sellerService.register(userId, tenantId, request, documents, logo));
     }
 
+    @PostMapping(value = "/register-public", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<SellerProfileResponse> registerPublic(
+            @RequestParam("email") String email,
+            @RequestPart("profile") @Valid SellerRegistrationRequest request,
+            @RequestPart(value = "documents", required = false) List<MultipartFile> documents,
+            @RequestPart(value = "logo", required = false) MultipartFile logo) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(sellerService.registerPublic(email, request, documents, logo));
+    }
+
     @GetMapping("/me")
     public ResponseEntity<SellerProfileResponse> getMyProfile(@RequestHeader("X-User-Id") UUID userId) {
         return ResponseEntity.ok(sellerService.getByUserId(userId));
@@ -55,12 +65,12 @@ public class SellerController {
         return ResponseEntity.ok(sellerService.getBySlug(slug));
     }
 
-    @GetMapping("/{slug}/theme")
-    public ResponseEntity<SellerProfileResponse.ThemeResponse> getTheme(@PathVariable String slug) {
-        return ResponseEntity.ok(sellerService.getTheme(slug));
+    @GetMapping("/theme")
+    public ResponseEntity<SellerProfileResponse.ThemeResponse> getTheme(@RequestHeader("X-User-Id") UUID userId) {
+        return ResponseEntity.ok(sellerService.getTheme(userId));
     }
 
-    @PutMapping("/me/theme")
+    @PutMapping("/theme")
     public ResponseEntity<SellerProfileResponse.ThemeResponse> updateTheme(
             @RequestHeader("X-User-Id") UUID userId,
             @RequestBody @Valid ThemeRequest request) {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -25,10 +25,14 @@ import { InputIconModule } from 'primeng/inputicon';
   templateUrl: './navbar.html'
 })
 export class NavbarComponent implements OnInit, OnDestroy {
+  @Input() tenantId: string | undefined;
+
   drawerVisible = false;
   categoryNodes: TreeNode[] = [];
   searchQuery = '';
   cartItemCount = 0;
+  loggedIn = false;
+  userRole: string | null = null;
   private cartSub?: Subscription;
 
   constructor(
@@ -39,13 +43,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.loggedIn = this.authService.isLoggedIn();
+    this.userRole = this.authService.getUserRole();
+
     this.categoryService.getTreeNodes().subscribe(nodes => {
       this.categoryNodes = this.makeAllSelectable(nodes);
     });
     this.cartSub = this.cartService.itemCount$.subscribe(count => {
       this.cartItemCount = count;
     });
-    if (this.authService.isLoggedIn() && this.authService.getUserRole() === 'BUYER') {
+    if (this.loggedIn && this.userRole === 'BUYER') {
       this.cartService.refreshCount();
     }
   }
@@ -58,12 +65,18 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.drawerVisible = !this.drawerVisible;
   }
 
+  onDrawerVisibleChange(visible: boolean): void {
+    this.drawerVisible = visible;
+  }
+
   goToLogin(): void {
     this.router.navigate(['/login']);
   }
 
   logout(): void {
     this.cartService.clearCount();
+    this.loggedIn = false;
+    this.userRole = null;
     this.authService.logout();
   }
 
@@ -73,13 +86,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   onSearch(): void {
     if (this.searchQuery.trim()) {
-      this.router.navigate(['/products/search'], { queryParams: { name: this.searchQuery.trim() } });
+      const queryParams: any = { name: this.searchQuery.trim() };
+      if (this.tenantId) queryParams.tenantId = this.tenantId;
+      this.router.navigate(['/products/search'], { queryParams });
     }
   }
 
   onCategorySelect(event: any): void {
     this.drawerVisible = false;
-    this.router.navigate(['/products/search'], { queryParams: { categoryId: event.node.data } });
+    const queryParams: any = { categoryId: event.node.data };
+    if (this.tenantId) queryParams.tenantId = this.tenantId;
+    this.router.navigate(['/products/search'], { queryParams });
   }
 
   private makeAllSelectable(nodes: TreeNode[]): TreeNode[] {

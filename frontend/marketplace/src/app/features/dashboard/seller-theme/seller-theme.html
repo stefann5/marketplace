@@ -12,26 +12,21 @@
       <p-card>
         <ng-template #header>
           <div class="p-4 pb-0">
-            <h3 class="text-lg font-semibold m-0">Color Palette</h3>
-            <p class="text-muted text-sm mt-1">Choose a primary color for your shop</p>
+            <h3 class="text-lg font-semibold m-0">Theme Settings</h3>
+            <p class="text-muted text-sm mt-1">Customize your shop appearance</p>
           </div>
         </ng-template>
         <div class="flex flex-col gap-5">
-          <p-select [options]="presetOptions" [(ngModel)]="theme.preset" optionLabel="label" optionValue="value"
-            (onChange)="onPresetChange()" class="w-full" />
-
           <div>
-            <p-floatlabel variant="on">
-              <input pInputText id="fontFamily" [(ngModel)]="theme.fontFamily" class="w-full" />
-              <label for="fontFamily">Font Family (optional)</label>
-            </p-floatlabel>
+            <label class="block text-sm font-medium mb-2">Preset</label>
+            <p-select [options]="presetOptions" [(ngModel)]="theme.preset" optionLabel="label" optionValue="value"
+              (onChange)="onPresetChange()" class="w-full" />
           </div>
 
           <div>
-            <p-floatlabel variant="on">
-              <input pInputText id="borderRadius" [(ngModel)]="theme.borderRadius" class="w-full" />
-              <label for="borderRadius">Border Radius (optional, e.g. 8px)</label>
-            </p-floatlabel>
+            <label class="block text-sm font-medium mb-2">Primary Color</label>
+            <p-select [options]="colorOptions" [(ngModel)]="theme.primaryColor" optionLabel="label" optionValue="value"
+              (onChange)="onColorChange()" class="w-full" placeholder="Default (Amber)" [showClear]="true" />
           </div>
         </div>
       </p-card>
@@ -57,7 +52,7 @@
     </div>
 
     <div class="mt-6">
-      <p-button label="Save Theme" icon="pi pi-save" [loading]="saving" (onClick)="save()" />
+      <p-button label="Save Theme" icon="pi pi-save" [loading]="saving" (click)="save()" />
     </div>
   }
 </div>

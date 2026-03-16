@@ -24,6 +24,22 @@ public class SellerService {
 
     private final SellerProfileRepository profileRepository;
     private final MinioService minioService;
+    private final AuthClient authClient;
+
+    @Transactional
+    public SellerProfileResponse registerPublic(String email,
+                                                SellerRegistrationRequest request,
+                                                List<MultipartFile> documents,
+                                                MultipartFile logo) {
+        InternalAuthUserResponse userContext = authClient.getUserByEmail(email);
+        if (!"SELLER".equals(userContext.role())) {
+            throw new SellerException("Only seller accounts can onboard", HttpStatus.BAD_REQUEST);
+        }
+        if (!userContext.emailVerified()) {
+            throw new SellerException("Please verify your email before onboarding", HttpStatus.FORBIDDEN);
+        }
+        return register(userContext.userId(), userContext.tenantId(), request, documents, logo);
+    }
 
     @Transactional
     public SellerProfileResponse register(UUID userId, UUID tenantId,
@@ -111,11 +127,11 @@ public class SellerService {
     }
 
     @Transactional(readOnly = true)
-    public SellerProfileResponse.ThemeResponse getTheme(String slug) {
-        SellerProfile profile = profileRepository.findBySlug(slug)
+    public SellerProfileResponse.ThemeResponse getTheme(UUID userId) {
+        SellerProfile profile = profileRepository.findByUserId(userId)
                 .orElseThrow(() -> new SellerException("Seller not found", HttpStatus.NOT_FOUND));
         SellerTheme theme = profile.getTheme();
-        if (theme == null) return new SellerProfileResponse.ThemeResponse("amber", null, null, null, null, null);
+        if (theme == null) return new SellerProfileResponse.ThemeResponse("nora", null, null, null, null, null);
         return toThemeResponse(theme);
     }
 
@@ -130,6 +146,7 @@ public class SellerService {
             profile.setTheme(theme);
         }
         theme.setPreset(request.preset());
+        theme.setPrimaryColor(request.primaryColor());
         profileRepository.save(profile);
         return toThemeResponse(theme);
     }
@@ -190,7 +207,7 @@ public class SellerService {
                 profile.getId(), profile.getUserId(), profile.getTenantId(),
                 profile.getCompanyName(), profile.getDescription(), profile.getSlug(),
                 profile.getContactPhone(), profile.getContactEmail(), profile.getContactAddress(),
-                profile.getLogoUrl(), profile.getStatus(), profile.getCreatedAt(),
+            profile.getLogoUrl(), profile.getStatus(), profile.getCreatedAt(),
                 docs, themeResp);
     }
 
@@ -208,7 +225,7 @@ public class SellerService {
                 profile.getId(), profile.getUserId(), profile.getTenantId(),
                 profile.getCompanyName(), profile.getDescription(), profile.getSlug(),
                 profile.getContactPhone(), profile.getContactEmail(), profile.getContactAddress(),
-                profile.getLogoUrl(), profile.getStatus(), profile.getCreatedAt(),
+            profile.getLogoUrl(), profile.getStatus(), profile.getCreatedAt(),
                 docs, themeResp);
     }
 

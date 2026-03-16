@@ -14,6 +14,10 @@ export class SellerService {
     return this.http.post<SellerProfile>(`${this.apiUrl}/register`, data);
   }
 
+  registerPublic(email: string, data: FormData): Observable<SellerProfile> {
+    return this.http.post<SellerProfile>(`${this.apiUrl}/register-public?email=${encodeURIComponent(email)}`, data);
+  }
+
   getMyProfile(): Observable<SellerProfile> {
     return this.http.get<SellerProfile>(`${this.apiUrl}/me`);
   }
@@ -25,7 +29,7 @@ export class SellerService {
   updateLogo(file: File): Observable<SellerProfile> {
     const formData = new FormData();
     formData.append('logo', file);
-    return this.http.put<SellerProfile>(`${this.apiUrl}/me/logo`, formData);
+    return this.http.post<SellerProfile>(`${this.apiUrl}/me/logo`, formData);
   }
 
   getBySlug(slug: string): Observable<SellerProfile> {
@@ -33,10 +37,10 @@ export class SellerService {
   }
 
   getTheme(): Observable<SellerTheme> {
-    return this.http.get<SellerTheme>(`${this.apiUrl}/me/theme`);
+    return this.http.get<SellerTheme>(`${this.apiUrl}/theme`);
   }
 
   updateTheme(request: ThemeRequest): Observable<SellerTheme> {
-    return this.http.put<SellerTheme>(`${this.apiUrl}/me/theme`, request);
+    return this.http.put<SellerTheme>(`${this.apiUrl}/theme`, request);
   }
 }

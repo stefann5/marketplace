@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MessageService } from 'primeng/api';
@@ -11,7 +12,7 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { FileUploadModule } from 'primeng/fileupload';
 import { ToastModule } from 'primeng/toast';
 import { CardModule } from 'primeng/card';
-import { SellerService } from '../../../core/services/seller.service';
+import { SellerService } from '../../core/services/seller.service';
 
 @Component({
   selector: 'app-seller-onboarding',
@@ -41,16 +42,23 @@ export class SellerOnboardingComponent {
   constructor(
     private fb: FormBuilder,
     private sellerService: SellerService,
+    private route: ActivatedRoute,
     private router: Router,
     private messageService: MessageService
   ) {
     this.profileForm = this.fb.group({
+      accountEmail: ['', [Validators.required, Validators.email]],
       companyName: ['', Validators.required],
       description: ['', Validators.required],
       contactPhone: ['', Validators.required],
       contactEmail: ['', [Validators.required, Validators.email]],
       contactAddress: ['']
     });
+
+    const email = this.route.snapshot.queryParamMap.get('email');
+    if (email) {
+      this.profileForm.patchValue({ accountEmail: email });
+    }
   }
 
   onLogoSelect(event: any): void {
@@ -86,20 +94,21 @@ export class SellerOnboardingComponent {
     this.loading = true;
     const formData = new FormData();
     const profile = this.profileForm.value;
+    const accountEmail = profile.accountEmail as string;
 
-    formData.append('companyName', profile.companyName);
-    formData.append('description', profile.description);
-    formData.append('contactPhone', profile.contactPhone);
-    formData.append('contactEmail', profile.contactEmail);
-    if (profile.contactAddress) {
-      formData.append('contactAddress', profile.contactAddress);
-    }
+    formData.append('profile', new Blob([JSON.stringify({
+      companyName: profile.companyName,
+      description: profile.description,
+      contactPhone: profile.contactPhone,
+      contactEmail: profile.contactEmail,
+      contactAddress: profile.contactAddress
+    })], { type: 'application/json' }));
     if (this.logo) {
       formData.append('logo', this.logo);
     }
     this.documents.forEach(doc => formData.append('documents', doc));
 
-    this.sellerService.register(formData).subscribe({
+    this.sellerService.registerPublic(accountEmail, formData).subscribe({
       next: () => {
         this.messageService.add({
           severity: 'success',
@@ -111,7 +120,7 @@ export class SellerOnboardingComponent {
           this.router.navigate(['/login']);
         }, 2000);
       },
-      error: (err) => {
+      error: (err: any) => {
         this.loading = false;
         this.messageService.add({
           severity: 'error',

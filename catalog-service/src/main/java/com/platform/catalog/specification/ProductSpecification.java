@@ -6,6 +6,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 public class ProductSpecification {
 
@@ -27,5 +28,9 @@ public class ProductSpecification {
 
     public static Specification<Product> hasMinRating(Double minRating) {
         return (root, query, cb) -> cb.greaterThanOrEqualTo(root.get("averageRating"), minRating);
+    }
+
+    public static Specification<Product> hasTenantId(UUID tenantId) {
+        return (root, query, cb) -> cb.equal(root.get("tenantId"), tenantId);
     }
 }

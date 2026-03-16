@@ -10,7 +10,13 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
   const authService = inject(AuthService);
 
   // Don't attach token to auth endpoints (login, register, refresh)
-  if (req.url.includes('/api/auth/login') || req.url.includes('/api/auth/register') || req.url.includes('/api/auth/refresh')) {
+  if (
+    req.url.includes('/api/auth/login') ||
+    req.url.includes('/api/auth/register') ||
+    req.url.includes('/api/auth/refresh') ||
+    req.url.includes('/api/auth/verify-email') ||
+    req.url.includes('/api/auth/resend-verification')
+  ) {
     return next(req);
   }
 

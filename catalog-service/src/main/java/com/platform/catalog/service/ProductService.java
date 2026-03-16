@@ -57,6 +57,9 @@ public class ProductService {
         if (criteria.minRating() != null) {
             spec = spec.and(ProductSpecification.hasMinRating(criteria.minRating()));
         }
+        if (criteria.tenantId() != null) {
+            spec = spec.and(ProductSpecification.hasTenantId(criteria.tenantId()));
+        }
 
         Sort sort = resolveSort(criteria.sortBy(), criteria.sortDirection());
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);

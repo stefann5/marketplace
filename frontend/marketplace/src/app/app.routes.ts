@@ -52,8 +52,7 @@ export const routes: Routes = [
   },
   {
     path: 'onboarding',
-    loadComponent: () => import('./features/onboarding/seller-onboarding').then(m => m.SellerOnboardingComponent),
-    canActivate: [authGuard, sellerGuard]
+    loadComponent: () => import('./features/onboarding/seller-onboarding').then(m => m.SellerOnboardingComponent)
   },
   {
     path: 'dashboard',
@@ -102,6 +101,11 @@ export const routes: Routes = [
   {
     path: 'shop/:slug',
     loadComponent: () => import('./features/shop/seller-shop').then(m => m.SellerShopComponent)
+  },
+  {
+    path: 'verify-email',
+    loadComponent: () => import('./features/auth/verify-email/verify-email').then(m => m.VerifyEmailComponent),
+    canActivate: [guestGuard]
   },
   {
     path: 'login',

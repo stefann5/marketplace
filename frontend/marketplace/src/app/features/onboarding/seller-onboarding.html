@@ -20,6 +20,11 @@
           <ng-template #content let-activateCallback="activateCallback">
             <form [formGroup]="profileForm" class="flex flex-col gap-5 p-4">
               <p-floatlabel variant="on">
+                <input pInputText id="accountEmail" formControlName="accountEmail" class="w-full" />
+                <label for="accountEmail">Account Email (verified) *</label>
+              </p-floatlabel>
+
+              <p-floatlabel variant="on">
                 <input pInputText id="companyName" formControlName="companyName" class="w-full" />
                 <label for="companyName">Company Name *</label>
               </p-floatlabel>
@@ -98,6 +103,10 @@
               <h3 class="text-lg font-semibold mb-4">Review Your Information</h3>
 
               <div class="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <span class="text-muted text-sm">Account Email</span>
+                  <p class="font-medium">{{ profileForm.get('accountEmail')?.value }}</p>
+                </div>
                 <div>
                   <span class="text-muted text-sm">Company Name</span>
                   <p class="font-medium">{{ profileForm.get('companyName')?.value }}</p>

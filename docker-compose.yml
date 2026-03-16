@@ -1,4 +1,18 @@
 services:
+  fake-smtp:
+    image: eclipse-temurin:21-jre
+    container_name: fake-smtp
+    command: ["java", "-jar", "/opt/fake-smtp/fake-smtp-server-2.4.1.jar"]
+    environment:
+      FAKESMTP_PORT: 2525
+    volumes:
+      - ./tools/fake-smtp-server-2.4.1.jar:/opt/fake-smtp/fake-smtp-server-2.4.1.jar:ro
+    ports:
+      - "2525:2525"
+      - "5080:8080"
+    networks:
+      - internal
+
   auth-service:
     build: ./auth-service
     environment:
@@ -7,7 +21,13 @@ services:
       DB_PASS: admin
       JWT_SECRET: dev-secret-key-minimum-256-bits-long-replace-in-production-env
       SELLER_SERVICE_URL: http://seller-service:8084
+      SMTP_HOST: fake-smtp
+      SMTP_PORT: 2525
+      SMTP_AUTH: false
+      SMTP_STARTTLS: false
+      MAIL_FROM: no-reply@marketplace.local
     depends_on:
+      - fake-smtp
       - seller-service
     networks:
       - internal
@@ -67,6 +87,7 @@ services:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
       MINIO_BUCKET: seller-documents
+      AUTH_SERVICE_URL: http://auth-service:8081
     depends_on:
       - minio
     networks:

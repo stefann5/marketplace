@@ -23,7 +23,7 @@ public class SellerTheme {
     private SellerProfile seller;
 
     @Column(nullable = false)
-    private String preset = "amber";
+    private String preset = "nora";
 
     private String primaryColor;
     private String fontFamily;

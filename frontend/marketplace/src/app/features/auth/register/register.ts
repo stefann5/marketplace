@@ -64,13 +64,19 @@ export class RegisterComponent {
     const { email, password, confirmPassword, role } = this.registerForm.value;
 
     this.authService.register(email, password, confirmPassword, role).subscribe({
-      next: (res) => {
-        this.authService.storeTokens(res);
-        if (role === 'SELLER') {
-          this.router.navigate(['/onboarding']);
-        } else {
-          this.router.navigate(['/']);
-        }
+      next: () => {
+        this.loading = false;
+        this.messageService.add({
+          severity: 'info',
+          summary: 'Verification Required',
+          detail: 'We sent a verification code to your email.'
+        });
+        this.router.navigate(['/verify-email'], {
+          queryParams: {
+            email,
+            next: role === 'SELLER' ? '/onboarding' : '/login'
+          }
+        });
       },
       error: (err) => {
         this.loading = false;

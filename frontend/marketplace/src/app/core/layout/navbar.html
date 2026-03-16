@@ -13,15 +13,15 @@
   </div>
 
   <div class="shrink-0">
-    @if (authService.isLoggedIn()) {
+    @if (loggedIn) {
       <div class="flex items-center gap-2">
-        @if (authService.getUserRole() === 'SELLER') {
+        @if (userRole === 'SELLER') {
           <p-button label="Dashboard" icon="pi pi-th-large" [text]="true" routerLink="/dashboard/products" />
         }
-        @if (authService.getUserRole() === 'ADMIN') {
+        @if (userRole === 'ADMIN') {
           <p-button label="Admin" icon="pi pi-shield" [text]="true" routerLink="/admin/sellers" />
         }
-        @if (authService.getUserRole() === 'BUYER') {
+        @if (userRole === 'BUYER') {
           <p-button icon="pi pi-list" label="Orders" [text]="true" routerLink="/orders" />
           <p-button routerLink="/cart" [text]="true" [rounded]="true" styleClass="relative !overflow-visible mr-2">
             <i class="pi pi-shopping-cart text-xl"></i>
@@ -39,7 +39,7 @@
   </div>
 </nav>
 
-<p-drawer [(visible)]="drawerVisible" header="Categories" position="left" styleClass="w-80">
+<p-drawer [visible]="drawerVisible" (visibleChange)="onDrawerVisibleChange($event)" header="Categories" position="left" styleClass="w-80">
   <p-tree [value]="categoryNodes" [filter]="true" filterPlaceholder="Filter categories"
     selectionMode="single" (onNodeSelect)="onCategorySelect($event)" />
 </p-drawer>

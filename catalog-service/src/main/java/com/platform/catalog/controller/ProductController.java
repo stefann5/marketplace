@@ -32,12 +32,13 @@ public class ProductController {
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
             @RequestParam(required = false) Double minRating,
+            @RequestParam(required = false) UUID tenantId,
             @RequestParam(required = false) String sortBy,
             @RequestParam(required = false) String sortDirection,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         ProductSearchCriteria criteria = new ProductSearchCriteria(
-                name, categoryId, minPrice, maxPrice, minRating, sortBy, sortDirection);
+                name, categoryId, minPrice, maxPrice, minRating, tenantId, sortBy, sortDirection);
         return ResponseEntity.ok(productService.searchProducts(criteria, PageRequest.of(page, size)));
     }
 

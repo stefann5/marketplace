@@ -22,6 +22,6 @@ public class InternalUserController {
     public ResponseEntity<Map<String, String>> getUserEmail(@PathVariable UUID userId) {
         return userRepository.findById(userId)
                 .map(user -> ResponseEntity.ok(Map.of("email", user.getEmail())))
-                .orElse(ResponseEntity.notFound().build());
+                .orElseGet(() -> ResponseEntity.<Map<String, String>>notFound().build());
     }
 }

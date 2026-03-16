@@ -2,8 +2,11 @@ package com.platform.auth.controller;
 
 import com.platform.auth.dto.JwtResponse;
 import com.platform.auth.dto.LoginRequest;
+import com.platform.auth.dto.RegisterResponse;
+import com.platform.auth.dto.ResendVerificationRequest;
 import com.platform.auth.dto.RefreshRequest;
 import com.platform.auth.dto.RegisterRequest;
+import com.platform.auth.dto.VerifyEmailRequest;
 import com.platform.auth.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +25,20 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<JwtResponse> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<Void> verifyEmail(@Valid @RequestBody VerifyEmailRequest request) {
+        authService.verifyEmail(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<Void> resendVerification(@Valid @RequestBody ResendVerificationRequest request) {
+        authService.resendVerification(request.email());
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/login")

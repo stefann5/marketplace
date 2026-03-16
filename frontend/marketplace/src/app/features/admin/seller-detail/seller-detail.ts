@@ -19,6 +19,7 @@ import { SellerProfile } from '../../../core/models/seller.model';
 })
 export class SellerDetailComponent implements OnInit {
   seller: SellerProfile | null = null;
+  logoLoadFailed = false;
   loading = true;
   actionLoading = false;
 
@@ -35,6 +36,7 @@ export class SellerDetailComponent implements OnInit {
     this.adminService.getSellerDetail(id).subscribe({
       next: (seller) => {
         this.seller = seller;
+        this.logoLoadFailed = false;
         this.loading = false;
       },
       error: () => {
@@ -111,5 +113,9 @@ export class SellerDetailComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/admin/sellers']);
+  }
+
+  onLogoError(): void {
+    this.logoLoadFailed = true;
   }
 }

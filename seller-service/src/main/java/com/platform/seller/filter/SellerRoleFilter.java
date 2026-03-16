@@ -22,6 +22,7 @@ public class SellerRoleFilter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
         String method = request.getMethod();
         if (uri.startsWith("/api/admin") || uri.startsWith("/internal")) return true;
+        if (uri.startsWith("/api/sellers/register-public")) return true;
         if ("GET".equals(method) && !uri.equals("/api/sellers/me")) return true;
         return SELLER_PATHS.stream().noneMatch(uri::startsWith);
     }

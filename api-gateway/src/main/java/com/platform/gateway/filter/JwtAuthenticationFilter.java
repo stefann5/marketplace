@@ -26,7 +26,10 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     private static final List<String> OPEN_PATHS = List.of(
             "/api/auth/login",
             "/api/auth/register",
-            "/api/auth/refresh"
+            "/api/auth/refresh",
+            "/api/auth/verify-email",
+            "/api/auth/resend-verification",
+            "/api/sellers/register-public"
     );
 
     private static final List<String> PUBLIC_GET_PATHS = List.of(
@@ -94,6 +97,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private boolean isPublicGetPath(String path) {
         if (path.startsWith("/api/products/seller")) return false;
+        if (path.startsWith("/api/sellers/theme")) return false;
+        if (path.equals("/api/sellers/me")) return false;
         if (path.endsWith("/mine")) return false;
         return PUBLIC_GET_PATHS.stream().anyMatch(path::startsWith);
     }

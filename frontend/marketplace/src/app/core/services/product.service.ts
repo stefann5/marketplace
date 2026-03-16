@@ -52,6 +52,7 @@ export class ProductService {
     minPrice?: number;
     maxPrice?: number;
     minRating?: number;
+    tenantId?: string;
     sortBy?: string;
     sortDirection?: string;
     page: number;
@@ -65,6 +66,7 @@ export class ProductService {
     if (params.minPrice != null) httpParams = httpParams.set('minPrice', params.minPrice);
     if (params.maxPrice != null) httpParams = httpParams.set('maxPrice', params.maxPrice);
     if (params.minRating != null) httpParams = httpParams.set('minRating', params.minRating);
+    if (params.tenantId) httpParams = httpParams.set('tenantId', params.tenantId);
     if (params.sortBy) httpParams = httpParams.set('sortBy', params.sortBy);
     if (params.sortDirection) httpParams = httpParams.set('sortDirection', params.sortDirection);
     return this.http.get<Page<Product>>(this.apiUrl, { params: httpParams });

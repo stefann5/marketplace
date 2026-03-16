@@ -1,0 +1,37 @@
+<p-toast />
+
+<div class="flex items-center justify-center min-h-screen bg-ground">
+  <p-card class="w-full max-w-[30rem]">
+    <ng-template #header>
+      <div class="text-center p-6 pb-0">
+        <h2 class="text-2xl font-bold m-0">Verify Email</h2>
+        <p class="text-muted mt-2">Enter the 6-digit code sent to your email</p>
+      </div>
+    </ng-template>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-col gap-6 p-2">
+      <div>
+        <p-floatlabel variant="on">
+          <input pInputText id="email" formControlName="email" class="w-full" />
+          <label for="email">Email</label>
+        </p-floatlabel>
+      </div>
+
+      <div>
+        <p-floatlabel variant="on">
+          <input pInputText id="code" formControlName="code" maxlength="6" class="w-full" />
+          <label for="code">Verification Code</label>
+        </p-floatlabel>
+      </div>
+
+      <p-button label="Verify" type="submit" styleClass="w-full" [disabled]="form.invalid || loading" [loading]="loading" />
+      <p-button label="Resend Code" type="button" [text]="true" styleClass="w-full" [loading]="resending" (onClick)="resend()" />
+    </form>
+
+    <ng-template #footer>
+      <div class="text-center">
+        <a routerLink="/login" class="text-primary font-semibold no-underline cursor-pointer">Back to Login</a>
+      </div>
+    </ng-template>
+  </p-card>
+</div>

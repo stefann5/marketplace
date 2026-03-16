@@ -49,6 +49,7 @@ export class ProductSearchComponent implements OnInit, OnDestroy {
   selectedCategoryNode: TreeNode | null = null;
   priceRange: [number, number] = [0, 10000];
   minRating: number | null = null;
+  tenantId: string | undefined;
 
   sortOptions: SortOption[] = [
     { label: 'Rating (High to Low)', value: 'rating_desc' },
@@ -94,6 +95,7 @@ export class ProductSearchComponent implements OnInit, OnDestroy {
 
       this.route.queryParams.subscribe(params => {
         if (params['name']) this.searchName = params['name'];
+        if (params['tenantId']) this.tenantId = params['tenantId'];
         if (params['categoryId']) {
           const catId = Number(params['categoryId']);
           this.selectedCategoryNode = this.findNodeByKey(this.categoryNodes, String(catId));
@@ -111,6 +113,7 @@ export class ProductSearchComponent implements OnInit, OnDestroy {
       minPrice: this.priceRange[0] > 0 ? this.priceRange[0] : undefined,
       maxPrice: this.priceRange[1] < 10000 ? this.priceRange[1] : undefined,
       minRating: this.minRating ?? undefined,
+      tenantId: this.tenantId,
       sortBy,
       sortDirection,
       page: this.page,

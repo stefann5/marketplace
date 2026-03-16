@@ -1,4 +1,8 @@
-<app-navbar />
+@if (navbarTenantId) {
+  <app-navbar [tenantId]="navbarTenantId" />
+} @else {
+  <app-navbar />
+}
 
 @if (loading) {
   <div class="flex items-center justify-center min-h-[60vh]">
@@ -8,8 +12,8 @@
   <div class="bg-primary/5 py-12">
     <div class="max-w-6xl mx-auto px-6">
       <div class="flex items-center gap-6">
-        @if (seller.logoUrl) {
-          <img [src]="seller.logoUrl" alt="Logo" class="w-24 h-24 object-cover rounded-full border-4 border-primary/20" />
+        @if (seller.logoUrl && !logoLoadFailed) {
+          <img [src]="seller.logoUrl" (error)="onLogoError()" alt="Logo" class="w-24 h-24 object-cover rounded-full border-4 border-primary/20" />
         } @else {
           <div class="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
             <i class="pi pi-building text-4xl text-primary"></i>
@@ -32,7 +36,9 @@
   </div>
 
   <div class="max-w-6xl mx-auto px-6 py-8">
-    <h2 class="text-xl font-semibold mb-6">Products</h2>
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-semibold m-0">Products</h2>
+    </div>
 
     @if (products.length === 0) {
       <div class="text-center py-12 text-muted">
@@ -40,28 +46,45 @@
         <p>This seller has no products yet.</p>
       </div>
     } @else {
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        @for (product of products; track product.id) {
-          <p-card styleClass="cursor-pointer hover:shadow-lg transition-shadow" (click)="viewProduct(product)">
-            @if (product.imageUrls?.length) {
-              <ng-template #header>
-                <img [src]="product.imageUrls[0]" [alt]="product.name" class="w-full h-48 object-cover" />
-              </ng-template>
-            }
-            <div>
-              <h3 class="font-semibold text-base m-0 truncate">{{ product.name }}</h3>
-              <p class="text-primary font-bold text-lg mt-1 mb-0">${{ product.price | number:'1.2-2' }}</p>
-              @if (product.averageRating > 0) {
-                <div class="flex items-center gap-1 mt-1 text-sm text-muted">
-                  <i class="pi pi-star-fill text-amber-500"></i>
-                  {{ product.averageRating | number:'1.1-1' }}
-                  <span>({{ product.reviewCount }})</span>
+      <p-dataview [value]="products" layout="grid">
+        <ng-template #grid let-items>
+          <div class="grid grid-cols-12 gap-4">
+            @for (product of items; track product.id) {
+              <div class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
+                <div class="flex flex-col border border-surface-200 bg-surface-0 rounded cursor-pointer hover:shadow-lg transition-shadow"
+                  (click)="viewProduct(product)">
+                  <div class="bg-surface-50 flex justify-center rounded p-4">
+                    <div class="relative mx-auto">
+                      @if (product.imageUrls.length) {
+                        <img class="rounded" [src]="product.imageUrls[0]" [alt]="product.name"
+                          style="width: 260px; height: 200px; object-fit: cover" />
+                      } @else {
+                        <div class="flex items-center justify-center rounded bg-surface-100"
+                          style="width: 260px; height: 200px">
+                          <i class="pi pi-image text-6xl text-muted"></i>
+                        </div>
+                      }
+                      <p-tag [value]="getStockLabel(product.stock)" [severity]="getStockSeverity(product.stock)"
+                        class="absolute" [style.left.px]="4" [style.top.px]="4" />
+                    </div>
+                  </div>
+                  <div class="p-4">
+                    <h3 class="font-semibold text-base m-0 truncate">{{ product.name }}</h3>
+                    <p class="text-primary font-bold text-lg mt-1 mb-0">{{ product.price | currency: 'USD' }}</p>
+                    @if (product.averageRating > 0) {
+                      <div class="flex items-center gap-1 mt-1 text-sm text-muted">
+                        <i class="pi pi-star-fill text-amber-500"></i>
+                        {{ product.averageRating | number:'1.1-1' }}
+                        <span>({{ product.reviewCount }})</span>
+                      </div>
+                    }
+                  </div>
                 </div>
-              }
-            </div>
-          </p-card>
-        }
-      </div>
+              </div>
+            }
+          </div>
+        </ng-template>
+      </p-dataview>
     }
   </div>
 }

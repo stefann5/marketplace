@@ -52,6 +52,4 @@ export interface UpdateProfileRequest {
 export interface ThemeRequest {
   preset: string;
   primaryColor?: string;
-  fontFamily?: string;
-  borderRadius?: string;
 }

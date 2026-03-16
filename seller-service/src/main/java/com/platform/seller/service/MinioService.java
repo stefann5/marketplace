@@ -33,6 +33,12 @@ public class MinioService {
                 minioClient.makeBucket(
                         MakeBucketArgs.builder().bucket(bucketName).build());
             }
+
+            minioClient.setBucketPolicy(
+                    SetBucketPolicyArgs.builder()
+                            .bucket(bucketName)
+                            .config(buildLogoPublicReadPolicy())
+                            .build());
         } catch (Exception e) {
             throw new RuntimeException("Failed to initialize MinIO bucket", e);
         }
@@ -92,6 +98,13 @@ public class MinioService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate presigned URL", e);
         }
+    }
+
+    private String buildLogoPublicReadPolicy() {
+        String resource = String.format("arn:aws:s3:::%s/*/logo*", bucketName);
+        return "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"AWS\":[\"*\"]},\"Action\":[\"s3:GetObject\"],\"Resource\":[\""
+                + resource +
+                "\"]}]}";
     }
 
     private String getExtension(String filename) {

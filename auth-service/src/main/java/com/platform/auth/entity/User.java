@@ -34,6 +34,11 @@ public class User {
 
     private UUID tenantId;
 
+    @Column(nullable = false)
+    private boolean emailVerified = false;
+
+    private LocalDateTime emailVerifiedAt;
+
     private LocalDateTime createdAt;
 
     @PrePersist

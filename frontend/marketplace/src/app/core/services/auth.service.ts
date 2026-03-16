@@ -11,6 +11,11 @@ export interface JwtResponse {
   sellerStatus: string | null;
 }
 
+export interface RegisterResponse {
+  message: string;
+  verificationRequired: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly apiUrl = `${environment.apiUrl}/api/auth`;
@@ -23,8 +28,16 @@ export class AuthService {
     );
   }
 
-  register(email: string, password: string, confirmPassword: string, role: string): Observable<JwtResponse> {
-    return this.http.post<JwtResponse>(`${this.apiUrl}/register`, { email, password, confirmPassword, role });
+  register(email: string, password: string, confirmPassword: string, role: string): Observable<RegisterResponse> {
+    return this.http.post<RegisterResponse>(`${this.apiUrl}/register`, { email, password, confirmPassword, role });
+  }
+
+  verifyEmail(email: string, code: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/verify-email`, { email, code });
+  }
+
+  resendVerification(email: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/resend-verification`, { email });
   }
 
   refresh(): Observable<JwtResponse> {
