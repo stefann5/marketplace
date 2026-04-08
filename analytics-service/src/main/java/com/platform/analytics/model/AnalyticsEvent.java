@@ -6,7 +6,6 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -26,8 +25,8 @@ public class AnalyticsEvent {
     private String orderId;
     private String searchTerm;
     private Integer quantity;
-    private BigDecimal unitPrice;
-    private BigDecimal orderTotal;
+    private double unitPrice;
+    private double orderTotal;
     private Long categoryId;
     private List<String> resultProductIds;
     private Instant timestamp;

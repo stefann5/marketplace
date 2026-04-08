@@ -13,7 +13,6 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 
@@ -71,7 +70,7 @@ public class EventConsumer {
         String tenantId = json.get("tenantId").asText();
         String orderId = json.get("orderId").asText();
         String userId = json.get("userId").asText();
-        BigDecimal total = new BigDecimal(json.get("total").asText());
+        double total = json.get("total").asDouble();
         Instant now = Instant.now();
 
         JsonNode items = json.get("items");
@@ -85,7 +84,7 @@ public class EventConsumer {
                 event.setOrderTotal(total);
                 event.setProductId(item.get("productId").asText());
                 event.setQuantity(item.get("quantity").asInt());
-                event.setUnitPrice(new BigDecimal(item.get("unitPrice").asText()));
+                event.setUnitPrice(item.get("unitPrice").asDouble());
                 if (item.has("categoryId") && !item.get("categoryId").isNull()) {
                     event.setCategoryId(item.get("categoryId").asLong());
                 }
