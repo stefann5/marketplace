@@ -33,4 +33,13 @@ public class ProductSpecification {
     public static Specification<Product> hasTenantId(UUID tenantId) {
         return (root, query, cb) -> cb.equal(root.get("tenantId"), tenantId);
     }
+
+    public static Specification<Product> hasTenantIdIn(List<UUID> tenantIds) {
+        return (root, query, cb) -> {
+            if (tenantIds == null || tenantIds.isEmpty()) {
+                return cb.disjunction();
+            }
+            return root.get("tenantId").in(tenantIds);
+        };
+    }
 }

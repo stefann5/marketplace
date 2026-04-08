@@ -100,7 +100,21 @@ export const routes: Routes = [
   },
   {
     path: 'shop/:slug',
-    loadComponent: () => import('./features/shop/seller-shop').then(m => m.SellerShopComponent)
+    loadComponent: () => import('./features/shop/seller-layout/seller-layout').then(m => m.SellerLayoutComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/shop/seller-shop').then(m => m.SellerShopComponent)
+      },
+      {
+        path: 'search',
+        loadComponent: () => import('./features/shop/seller-search/seller-search').then(m => m.SellerSearchComponent)
+      },
+      {
+        path: 'product/:id',
+        loadComponent: () => import('./features/products/product-detail/product-detail').then(m => m.ProductDetailComponent)
+      }
+    ]
   },
   {
     path: 'verify-email',

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { TableModule } from 'primeng/table';
@@ -15,10 +15,11 @@ import { SellerProfile } from '../../../core/models/seller.model';
   imports: [CommonModule, FormsModule, TableModule, ButtonModule, TagModule, SelectModule],
   templateUrl: './seller-list.html'
 })
-export class SellerListComponent implements OnInit {
+export class SellerListComponent implements OnInit, OnDestroy {
   sellers: SellerProfile[] = [];
   loading = true;
   selectedStatus: string | null = null;
+  private destroyed = false;
 
   statusOptions = [
     { label: 'All', value: null },
@@ -28,20 +29,39 @@ export class SellerListComponent implements OnInit {
     { label: 'Suspended', value: 'SUSPENDED' }
   ];
 
-  constructor(private adminService: AdminService, private router: Router) {}
+  constructor(
+    private adminService: AdminService,
+    private router: Router,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit(): void {
     this.loadSellers();
   }
 
   loadSellers(): void {
-    this.loading = true;
+    setTimeout(() => {
+      if (this.destroyed) return;
+      this.loading = true;
+      this.cdr.markForCheck();
+    }, 0);
+
     this.adminService.listSellers(this.selectedStatus || undefined).subscribe({
       next: (sellers) => {
-        this.sellers = sellers;
-        this.loading = false;
+        setTimeout(() => {
+          if (this.destroyed) return;
+          this.sellers = sellers;
+          this.loading = false;
+          this.cdr.markForCheck();
+        }, 0);
       },
-      error: () => this.loading = false
+      error: () => {
+        setTimeout(() => {
+          if (this.destroyed) return;
+          this.loading = false;
+          this.cdr.markForCheck();
+        }, 0);
+      }
     });
   }
 
@@ -65,5 +85,9 @@ export class SellerListComponent implements OnInit {
 
   getStatusLabel(status: string): string {
     return status.replace('_', ' ');
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed = true;
   }
 }

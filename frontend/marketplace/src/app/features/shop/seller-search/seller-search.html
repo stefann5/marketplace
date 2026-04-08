@@ -1,0 +1,7 @@
+@if (!tenantId) {
+  <div class="flex items-center justify-center min-h-[60vh]">
+    <i class="pi pi-spin pi-spinner text-4xl"></i>
+  </div>
+} @else {
+  <app-product-search [forcedTenantId]="tenantId" [sellerSlug]="slug" [useSellerRoutes]="true" />
+}

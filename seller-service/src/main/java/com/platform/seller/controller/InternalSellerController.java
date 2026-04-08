@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 import java.util.UUID;
+import java.util.List;
 
 @RestController
 @RequestMapping("/internal/sellers")
@@ -25,5 +26,19 @@ public class InternalSellerController {
             return ResponseEntity.ok(Map.of("status", "NOT_REGISTERED"));
         }
         return ResponseEntity.ok(Map.of("status", status));
+    }
+
+    @GetMapping("/tenant/{tenantId}/status")
+    public ResponseEntity<Map<String, String>> getStatusByTenant(@PathVariable UUID tenantId) {
+        String status = sellerService.getStatusByTenantId(tenantId);
+        if (status == null) {
+            return ResponseEntity.ok(Map.of("status", "NOT_REGISTERED"));
+        }
+        return ResponseEntity.ok(Map.of("status", status));
+    }
+
+    @GetMapping("/active-tenants")
+    public ResponseEntity<Map<String, List<UUID>>> getActiveTenants() {
+        return ResponseEntity.ok(Map.of("tenantIds", sellerService.getActiveTenantIds()));
     }
 }

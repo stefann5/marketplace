@@ -1,0 +1,8 @@
+@if (loading) {
+  <div class="flex items-center justify-center min-h-screen">
+    <i class="pi pi-spin pi-spinner text-4xl"></i>
+  </div>
+} @else {
+  <app-navbar [tenantId]="tenantId" [sellerSlug]="slug" [brandLabel]="companyName" />
+  <router-outlet />
+}

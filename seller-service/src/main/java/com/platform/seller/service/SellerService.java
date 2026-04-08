@@ -100,6 +100,9 @@ public class SellerService {
     public SellerProfileResponse getBySlug(String slug) {
         SellerProfile profile = profileRepository.findBySlug(slug)
                 .orElseThrow(() -> new SellerException("Seller not found", HttpStatus.NOT_FOUND));
+        if (profile.getStatus() != SellerStatus.ACTIVE) {
+            throw new SellerException("Seller not found", HttpStatus.NOT_FOUND);
+        }
         return toResponse(profile);
     }
 
@@ -192,6 +195,21 @@ public class SellerService {
         return profileRepository.findByUserId(userId)
                 .map(p -> p.getStatus().name())
                 .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public String getStatusByTenantId(UUID tenantId) {
+        return profileRepository.findByTenantId(tenantId)
+                .map(p -> p.getStatus().name())
+                .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<UUID> getActiveTenantIds() {
+        return profileRepository.findByStatus(SellerStatus.ACTIVE)
+                .stream()
+                .map(SellerProfile::getTenantId)
+                .toList();
     }
 
     private SellerProfileResponse toResponse(SellerProfile profile) {

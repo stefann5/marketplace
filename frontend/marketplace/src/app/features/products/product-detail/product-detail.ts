@@ -16,6 +16,8 @@ import { ProductService } from '../../../core/services/product.service';
 import { CartService } from '../../../core/services/cart.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ReviewService } from '../../../core/services/review.service';
+import { SellerService } from '../../../core/services/seller.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { Product } from '../../../core/models/product.model';
 import { Cart } from '../../../core/models/cart.model';
 import { Review, ReviewRequest } from '../../../core/models/review.model';
@@ -33,6 +35,9 @@ import { Review, ReviewRequest } from '../../../core/models/review.model';
 })
 export class ProductDetailComponent implements OnInit, OnDestroy {
   product: Product | null = null;
+  notFound = false;
+  sellerSlug: string | null = null;
+  sellerTenantId: string | null = null;
   selectedImageIndex = 0;
   addingToCart = false;
   cart: Cart | null = null;
@@ -57,6 +62,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     private cartService: CartService,
     public authService: AuthService,
     private reviewService: ReviewService,
+    private sellerService: SellerService,
+    private themeService: ThemeService,
     private messageService: MessageService,
     private cdr: ChangeDetectorRef
   ) {}
@@ -66,18 +73,56 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       this.cart = cart;
       this.cdr.markForCheck();
     });
+    this.sellerSlug = this.route.parent?.snapshot.paramMap.get('slug') ?? null;
+
     const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.productService.getById(id).subscribe({
-        next: p => {
-          this.product = p;
-          this.loadReviews();
-          this.loadMyReview();
-          this.cdr.markForCheck();
-        },
-        error: () => this.router.navigate(['/products'])
-      });
+    if (!id) {
+      this.router.navigate(['/products']);
+      return;
     }
+
+    if (this.sellerSlug) {
+      this.sellerService.getBySlug(this.sellerSlug).subscribe({
+        next: async (seller) => {
+          this.sellerTenantId = seller.tenantId;
+          await this.themeService.applySellerTheme(seller.theme?.preset, seller.theme?.primaryColor);
+          this.loadProduct(id);
+        },
+        error: () => {
+          this.notFound = true;
+          this.cdr.markForCheck();
+        }
+      });
+    } else {
+      this.loadProduct(id);
+    }
+  }
+
+  private loadProduct(id: string): void {
+    this.productService.getById(id).subscribe({
+      next: p => {
+        if (this.sellerTenantId && p.tenantId !== this.sellerTenantId) {
+          this.notFound = true;
+          this.product = null;
+          this.cdr.markForCheck();
+          return;
+        }
+
+        this.notFound = false;
+        this.product = p;
+        this.loadReviews();
+        this.loadMyReview();
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        if (this.sellerSlug) {
+          this.notFound = true;
+          this.cdr.markForCheck();
+        } else {
+          this.router.navigate(['/products']);
+        }
+      }
+    });
   }
 
   loadReviews(): void {
@@ -164,6 +209,10 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
+    if (this.sellerSlug) {
+      this.router.navigate(['/shop', this.sellerSlug, 'search'], { queryParams: this.route.snapshot.queryParams });
+      return;
+    }
     this.router.navigate(['/products']);
   }
 

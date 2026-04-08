@@ -20,15 +20,15 @@ export class AdminService {
     return this.http.get<SellerProfile>(`${this.apiUrl}/${id}`);
   }
 
-  approveSeller(id: string): Observable<SellerProfile> {
-    return this.http.patch<SellerProfile>(`${this.apiUrl}/${id}/approve`, {});
+  approveSeller(id: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${id}/approve`, {});
   }
 
-  rejectSeller(id: string): Observable<SellerProfile> {
-    return this.http.patch<SellerProfile>(`${this.apiUrl}/${id}/reject`, {});
+  rejectSeller(id: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${id}/reject`, {});
   }
 
-  suspendSeller(id: string): Observable<SellerProfile> {
-    return this.http.patch<SellerProfile>(`${this.apiUrl}/${id}/suspend`, {});
+  suspendSeller(id: string): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/${id}/suspend`, {});
   }
 }

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -35,6 +35,10 @@ interface SortOption {
   templateUrl: './product-search.html'
 })
 export class ProductSearchComponent implements OnInit, OnDestroy {
+  @Input() forcedTenantId: string | undefined;
+  @Input() sellerSlug: string | undefined;
+  @Input() useSellerRoutes = false;
+
   products: Product[] = [];
   totalRecords = 0;
   rows = 20;
@@ -62,6 +66,7 @@ export class ProductSearchComponent implements OnInit, OnDestroy {
   selectedSort: SortOption = this.sortOptions[0];
 
   categoryNodes: TreeNode[] = [];
+  private pendingCategoryId: number | null = null;
   ratingOptions = [
     { label: 'Any', value: null },
     { label: '4+ Stars', value: 4 },
@@ -89,19 +94,36 @@ export class ProductSearchComponent implements OnInit, OnDestroy {
       this.cart = cart;
       this.cdr.markForCheck();
     });
+    this.route.queryParams.subscribe(params => {
+      this.searchName = params['name'] ?? '';
+      this.tenantId = params['tenantId'] ?? undefined;
+      if (this.forcedTenantId) this.tenantId = this.forcedTenantId;
+
+      if (params['categoryId']) {
+        const catId = Number(params['categoryId']);
+        this.pendingCategoryId = Number.isFinite(catId) ? catId : null;
+      } else {
+        this.pendingCategoryId = null;
+        this.selectedCategoryNode = null;
+      }
+
+      if (this.pendingCategoryId !== null && this.categoryNodes.length > 0) {
+        this.selectedCategoryNode = this.findNodeByKey(this.categoryNodes, String(this.pendingCategoryId));
+      }
+
+      this.page = 0;
+      this.loadProducts();
+      this.cdr.markForCheck();
+    });
+
     this.categoryService.getTreeNodes().subscribe(nodes => {
       this.categoryNodes = this.makeAllSelectable(nodes);
-      this.cdr.markForCheck();
-
-      this.route.queryParams.subscribe(params => {
-        if (params['name']) this.searchName = params['name'];
-        if (params['tenantId']) this.tenantId = params['tenantId'];
-        if (params['categoryId']) {
-          const catId = Number(params['categoryId']);
-          this.selectedCategoryNode = this.findNodeByKey(this.categoryNodes, String(catId));
-        }
+      if (this.pendingCategoryId !== null) {
+        this.selectedCategoryNode = this.findNodeByKey(this.categoryNodes, String(this.pendingCategoryId));
+        this.page = 0;
         this.loadProducts();
-      });
+      }
+      this.cdr.markForCheck();
     });
   }
 
@@ -159,6 +181,12 @@ export class ProductSearchComponent implements OnInit, OnDestroy {
   }
 
   viewProduct(id: string): void {
+    if (this.useSellerRoutes && this.sellerSlug) {
+      this.router.navigate(['/shop', this.sellerSlug, 'product', id], {
+        queryParams: this.route.snapshot.queryParams
+      });
+      return;
+    }
     this.router.navigate(['/products', id]);
   }
 

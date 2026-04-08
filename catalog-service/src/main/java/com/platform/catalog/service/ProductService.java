@@ -1,6 +1,7 @@
 package com.platform.catalog.service;
 
 import com.platform.catalog.dto.*;
+import com.platform.catalog.client.SellerClient;
 import com.platform.catalog.entity.Product;
 import com.platform.catalog.entity.ProductImage;
 import com.platform.catalog.exception.CatalogException;
@@ -33,6 +34,7 @@ public class ProductService {
     private final ProductImageRepository productImageRepository;
     private final CategoryRepository categoryRepository;
     private final MinioService minioService;
+    private final SellerClient sellerClient;
 
     @Transactional(readOnly = true)
     public Page<ProductResponse> searchProducts(ProductSearchCriteria criteria, Pageable pageable) {
@@ -58,7 +60,15 @@ public class ProductService {
             spec = spec.and(ProductSpecification.hasMinRating(criteria.minRating()));
         }
         if (criteria.tenantId() != null) {
+            if (!sellerClient.isTenantActive(criteria.tenantId())) {
+                Sort sort = resolveSort(criteria.sortBy(), criteria.sortDirection());
+                Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
+                return Page.empty(sortedPageable);
+            }
             spec = spec.and(ProductSpecification.hasTenantId(criteria.tenantId()));
+        } else {
+            List<UUID> activeTenantIds = sellerClient.getActiveTenantIds();
+            spec = spec.and(ProductSpecification.hasTenantIdIn(activeTenantIds));
         }
 
         Sort sort = resolveSort(criteria.sortBy(), criteria.sortDirection());
@@ -82,6 +92,9 @@ public class ProductService {
     public ProductResponse getProduct(UUID id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new CatalogException("Product not found", HttpStatus.NOT_FOUND));
+        if (!sellerClient.isTenantActive(product.getTenantId())) {
+            throw new CatalogException("Product not found", HttpStatus.NOT_FOUND);
+        }
         return ProductResponse.from(product);
     }
 

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -9,6 +9,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { AdminService } from '../../../core/services/admin.service';
 import { SellerProfile } from '../../../core/models/seller.model';
+import { timeout } from 'rxjs';
 
 @Component({
   selector: 'app-seller-detail',
@@ -17,31 +18,57 @@ import { SellerProfile } from '../../../core/models/seller.model';
   providers: [MessageService, ConfirmationService],
   templateUrl: './seller-detail.html'
 })
-export class SellerDetailComponent implements OnInit {
+export class SellerDetailComponent implements OnInit, OnDestroy {
   seller: SellerProfile | null = null;
   logoLoadFailed = false;
   loading = true;
+  loadError = false;
   actionLoading = false;
+  private destroyed = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private adminService: AdminService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.loadSeller();
+  }
+
+  loadSeller(): void {
     const id = this.route.snapshot.paramMap.get('id')!;
-    this.adminService.getSellerDetail(id).subscribe({
+    setTimeout(() => {
+      if (this.destroyed) return;
+      this.loading = true;
+      this.loadError = false;
+      this.cdr.detectChanges();
+    }, 0);
+
+    this.adminService.getSellerDetail(id).pipe(
+      timeout(10000)
+    ).subscribe({
       next: (seller) => {
-        this.seller = seller;
-        this.logoLoadFailed = false;
-        this.loading = false;
+        setTimeout(() => {
+          if (this.destroyed) return;
+          this.seller = seller;
+          this.logoLoadFailed = false;
+          this.loading = false;
+          this.loadError = false;
+          this.cdr.detectChanges();
+        }, 0);
       },
       error: () => {
-        this.loading = false;
-        this.router.navigate(['/admin/sellers']);
+        setTimeout(() => {
+          if (this.destroyed) return;
+          this.seller = null;
+          this.loading = false;
+          this.loadError = true;
+          this.cdr.detectChanges();
+        }, 0);
       }
     });
   }
@@ -52,9 +79,9 @@ export class SellerDetailComponent implements OnInit {
       accept: () => {
         this.actionLoading = true;
         this.adminService.approveSeller(this.seller!.id).subscribe({
-          next: (updated) => {
-            this.seller = updated;
+          next: () => {
             this.actionLoading = false;
+            this.loadSeller();
             this.messageService.add({ severity: 'success', summary: 'Seller Approved' });
           },
           error: () => this.actionLoading = false
@@ -69,9 +96,9 @@ export class SellerDetailComponent implements OnInit {
       accept: () => {
         this.actionLoading = true;
         this.adminService.rejectSeller(this.seller!.id).subscribe({
-          next: (updated) => {
-            this.seller = updated;
+          next: () => {
             this.actionLoading = false;
+            this.loadSeller();
             this.messageService.add({ severity: 'warn', summary: 'Seller Rejected' });
           },
           error: () => this.actionLoading = false
@@ -86,9 +113,9 @@ export class SellerDetailComponent implements OnInit {
       accept: () => {
         this.actionLoading = true;
         this.adminService.suspendSeller(this.seller!.id).subscribe({
-          next: (updated) => {
-            this.seller = updated;
+          next: () => {
             this.actionLoading = false;
+            this.loadSeller();
             this.messageService.add({ severity: 'warn', summary: 'Seller Suspended' });
           },
           error: () => this.actionLoading = false
@@ -117,5 +144,9 @@ export class SellerDetailComponent implements OnInit {
 
   onLogoError(): void {
     this.logoLoadFailed = true;
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed = true;
   }
 }

@@ -1,9 +1,3 @@
-@if (navbarTenantId) {
-  <app-navbar [tenantId]="navbarTenantId" />
-} @else {
-  <app-navbar />
-}
-
 @if (loading) {
   <div class="flex items-center justify-center min-h-[60vh]">
     <i class="pi pi-spin pi-spinner text-4xl"></i>

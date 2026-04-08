@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -22,10 +22,13 @@ import { InputIconModule } from 'primeng/inputicon';
     CommonModule, FormsModule, RouterLink,
     ButtonModule, DrawerModule, TreeModule, InputTextModule, InputIconModule, IconFieldModule, BadgeModule
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './navbar.html'
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   @Input() tenantId: string | undefined;
+  @Input() sellerSlug: string | undefined;
+  @Input() brandLabel: string | undefined;
 
   drawerVisible = false;
   categoryNodes: TreeNode[] = [];
@@ -39,7 +42,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     public authService: AuthService,
     private categoryService: CategoryService,
     private cartService: CartService,
-    private router: Router
+    private router: Router,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -47,10 +51,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.userRole = this.authService.getUserRole();
 
     this.categoryService.getTreeNodes().subscribe(nodes => {
-      this.categoryNodes = this.makeAllSelectable(nodes);
+      setTimeout(() => {
+        this.categoryNodes = this.makeAllSelectable(nodes);
+        this.cdr.markForCheck();
+      }, 0);
     });
     this.cartSub = this.cartService.itemCount$.subscribe(count => {
-      this.cartItemCount = count;
+      setTimeout(() => {
+        this.cartItemCount = count;
+        this.cdr.markForCheck();
+      }, 0);
     });
     if (this.loggedIn && this.userRole === 'BUYER') {
       this.cartService.refreshCount();
@@ -81,22 +91,43 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   goHome(): void {
+    const sellerSlug = this.resolveSellerSlug();
+    if (sellerSlug) {
+      this.router.navigate(['/shop', sellerSlug]);
+      return;
+    }
     this.router.navigate(['/products']);
   }
 
   onSearch(): void {
     if (this.searchQuery.trim()) {
+      const sellerSlug = this.resolveSellerSlug();
       const queryParams: any = { name: this.searchQuery.trim() };
       if (this.tenantId) queryParams.tenantId = this.tenantId;
-      this.router.navigate(['/products/search'], { queryParams });
+      if (sellerSlug) {
+        this.router.navigate(['/shop', sellerSlug, 'search'], { queryParams });
+      } else {
+        this.router.navigate(['/products/search'], { queryParams });
+      }
     }
   }
 
   onCategorySelect(event: any): void {
     this.drawerVisible = false;
+    const sellerSlug = this.resolveSellerSlug();
     const queryParams: any = { categoryId: event.node.data };
     if (this.tenantId) queryParams.tenantId = this.tenantId;
-    this.router.navigate(['/products/search'], { queryParams });
+    if (sellerSlug) {
+      this.router.navigate(['/shop', sellerSlug, 'search'], { queryParams });
+    } else {
+      this.router.navigate(['/products/search'], { queryParams });
+    }
+  }
+
+  private resolveSellerSlug(): string | undefined {
+    if (this.sellerSlug) return this.sellerSlug;
+    const match = this.router.url.match(/^\/shop\/([^/?#]+)/);
+    return match ? decodeURIComponent(match[1]) : undefined;
   }
 
   private makeAllSelectable(nodes: TreeNode[]): TreeNode[] {

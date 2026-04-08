@@ -45,6 +45,7 @@ services:
       MINIO_BUCKET: product-images
       ORDER_SERVICE_URL: http://order-service:8083
       AUTH_SERVICE_URL: http://auth-service:8081
+      SELLER_SERVICE_URL: http://seller-service:8084
     depends_on:
       - minio
     networks:
