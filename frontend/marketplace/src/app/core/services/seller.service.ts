@@ -32,6 +32,10 @@ export class SellerService {
     return this.http.post<SellerProfile>(`${this.apiUrl}/me/logo`, formData);
   }
 
+  getAll(): Observable<SellerProfile[]> {
+    return this.http.get<SellerProfile[]>(this.apiUrl);
+  }
+
   getBySlug(slug: string): Observable<SellerProfile> {
     return this.http.get<SellerProfile>(`${this.apiUrl}/${slug}`);
   }

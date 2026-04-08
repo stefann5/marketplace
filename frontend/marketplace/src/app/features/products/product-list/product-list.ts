@@ -133,6 +133,10 @@ export class ProductListComponent implements OnInit, OnDestroy {
     }
   }
 
+  browseSellers(): void {
+    this.router.navigate(['/sellers']);
+  }
+
   isBuyer(): boolean {
     return this.authService.getUserRole() !== 'SELLER';
   }

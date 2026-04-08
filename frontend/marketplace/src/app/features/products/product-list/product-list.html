@@ -2,7 +2,9 @@
   <p-dataview #dv [value]="products" [paginator]="true" [rows]="rows" [totalRecords]="totalRecords" [lazy]="true"
     (onLazyLoad)="onPageChange($event)" [first]="first" [layout]="layout">
     <ng-template #header>
-      <div class="flex justify-end">
+      <div class="flex justify-between items-center">
+        <button pButton label="Browse Sellers" icon="pi pi-building" [outlined]="true"
+          (click)="browseSellers()"></button>
         <p-selectbutton [(ngModel)]="layout" [options]="layoutOptions" [allowEmpty]="false">
           <ng-template #item let-item>
             <i class="pi" [ngClass]="{ 'pi-bars': item === 'list', 'pi-table': item === 'grid' }"></i>

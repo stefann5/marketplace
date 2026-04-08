@@ -60,6 +60,11 @@ public class SellerController {
         return ResponseEntity.ok(sellerService.updateLogo(userId, logo));
     }
 
+    @GetMapping
+    public ResponseEntity<List<SellerProfileResponse>> listActive() {
+        return ResponseEntity.ok(sellerService.listByStatus(com.platform.seller.enums.SellerStatus.ACTIVE));
+    }
+
     @GetMapping("/{slug}")
     public ResponseEntity<SellerProfileResponse> getBySlug(@PathVariable String slug) {
         return ResponseEntity.ok(sellerService.getBySlug(slug));
