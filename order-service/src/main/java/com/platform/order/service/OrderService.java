@@ -3,6 +3,8 @@ package com.platform.order.service;
 import com.platform.order.dto.OrderResponse;
 import com.platform.order.entity.Order;
 import com.platform.order.enums.OrderStatus;
+import com.platform.order.event.EventPublisher;
+import com.platform.order.event.OrderFulfilledEvent;
 import com.platform.order.exception.OrderException;
 import com.platform.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,6 +21,7 @@ import java.util.UUID;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final EventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public List<OrderResponse> getBuyerOrders(UUID userId) {
@@ -52,6 +56,12 @@ public class OrderService {
 
         order.setStatus(OrderStatus.FULFILLED);
         orderRepository.save(order);
+
+        eventPublisher.publishOrderFulfilled(new OrderFulfilledEvent(
+                order.getTenantId().toString(),
+                order.getId().toString(),
+                Instant.now()));
+
         return OrderResponse.from(order);
     }
 

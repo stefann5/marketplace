@@ -10,6 +10,9 @@ import com.platform.order.entity.CartItem;
 import com.platform.order.entity.Order;
 import com.platform.order.entity.OrderItem;
 import com.platform.order.enums.OrderStatus;
+import com.platform.order.event.EventPublisher;
+import com.platform.order.event.OrderItemData;
+import com.platform.order.event.OrderPlacedEvent;
 import com.platform.order.exception.OrderException;
 import com.platform.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +35,7 @@ public class CheckoutService {
     private final CartService cartService;
     private final CatalogClient catalogClient;
     private final OrderRepository orderRepository;
+    private final EventPublisher eventPublisher;
 
     @Transactional
     public List<OrderResponse> checkout(UUID userId) {
@@ -55,6 +60,23 @@ public class CheckoutService {
 
         List<Order> savedOrders = orderRepository.saveAll(orders);
         cartService.clearCart(userId);
+
+        for (Order saved : savedOrders) {
+            List<OrderItemData> itemData = saved.getItems().stream()
+                    .map(oi -> new OrderItemData(
+                            oi.getProductId().toString(),
+                            oi.getQuantity(),
+                            oi.getUnitPrice(),
+                            oi.getCategoryId()))
+                    .toList();
+            eventPublisher.publishOrderPlaced(new OrderPlacedEvent(
+                    saved.getTenantId().toString(),
+                    saved.getId().toString(),
+                    saved.getUserId().toString(),
+                    saved.getTotal(),
+                    itemData,
+                    Instant.now()));
+        }
 
         return savedOrders.stream().map(OrderResponse::from).toList();
     }
