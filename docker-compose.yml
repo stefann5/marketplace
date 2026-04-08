@@ -32,6 +32,30 @@ services:
     networks:
       - internal
 
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - internal
+
+  mongodb:
+    image: mongo:8.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    networks:
+      - internal
+
   catalog-service:
     build: ./catalog-service
     environment:
@@ -46,8 +70,13 @@ services:
       ORDER_SERVICE_URL: http://order-service:8083
       AUTH_SERVICE_URL: http://auth-service:8081
       SELLER_SERVICE_URL: http://seller-service:8084
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASS: guest
     depends_on:
       - minio
+      - rabbitmq
     networks:
       - internal
 
@@ -72,8 +101,13 @@ services:
       DB_USER: postgres
       DB_PASS: admin
       CATALOG_SERVICE_URL: http://catalog-service:8082
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASS: guest
     depends_on:
       - catalog-service
+      - rabbitmq
     networks:
       - internal
 
@@ -111,11 +145,28 @@ services:
       - catalog-service
       - order-service
       - seller-service
+      - analytics-service
+    networks:
+      - internal
+
+  analytics-service:
+    build: ./analytics-service
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/analytics_db
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASS: guest
+    depends_on:
+      - mongodb
+      - rabbitmq
     networks:
       - internal
 
 volumes:
   minio-data:
+  rabbitmq-data:
+  mongodb-data:
 
 networks:
   internal:
