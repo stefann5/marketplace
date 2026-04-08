@@ -89,6 +89,10 @@ export const routes: Routes = [
       {
         path: 'theme',
         loadComponent: () => import('./features/dashboard/seller-theme/seller-theme').then(m => m.SellerThemeComponent)
+      },
+      {
+        path: 'analytics',
+        loadComponent: () => import('./features/dashboard/seller-analytics/seller-analytics').then(m => m.SellerAnalyticsComponent)
       }
     ]
   },
