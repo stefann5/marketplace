@@ -3,6 +3,9 @@ package com.platform.catalog.service;
 import com.platform.catalog.dto.*;
 import com.platform.catalog.client.SellerClient;
 import com.platform.catalog.entity.Product;
+import com.platform.catalog.event.EventPublisher;
+import com.platform.catalog.event.ProductViewedEvent;
+import com.platform.catalog.event.ProductSearchedEvent;
 import com.platform.catalog.entity.ProductImage;
 import com.platform.catalog.exception.CatalogException;
 import com.platform.catalog.repository.CategoryRepository;
@@ -20,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -35,6 +39,7 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final MinioService minioService;
     private final SellerClient sellerClient;
+    private final EventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public Page<ProductResponse> searchProducts(ProductSearchCriteria criteria, Pageable pageable) {
@@ -74,7 +79,16 @@ public class ProductService {
         Sort sort = resolveSort(criteria.sortBy(), criteria.sortDirection());
         Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort);
 
-        return productRepository.findAll(spec, sortedPageable).map(ProductResponse::from);
+        Page<ProductResponse> result = productRepository.findAll(spec, sortedPageable).map(ProductResponse::from);
+
+        if (criteria.name() != null && !criteria.name().isBlank()) {
+            List<String> resultIds = result.getContent().stream()
+                    .map(p -> p.id().toString()).toList();
+            eventPublisher.publishProductSearched(new ProductSearchedEvent(
+                    criteria.name(), resultIds, (int) result.getTotalElements(), Instant.now()));
+        }
+
+        return result;
     }
 
     private Sort resolveSort(String sortBy, String direction) {
@@ -95,6 +109,14 @@ public class ProductService {
         if (!sellerClient.isTenantActive(product.getTenantId())) {
             throw new CatalogException("Product not found", HttpStatus.NOT_FOUND);
         }
+
+        eventPublisher.publishProductViewed(new ProductViewedEvent(
+                product.getTenantId().toString(),
+                product.getId().toString(),
+                product.getName(),
+                product.getCategoryId() != null ? product.getCategoryId().toString() : null,
+                Instant.now()));
+
         return ProductResponse.from(product);
     }
 
