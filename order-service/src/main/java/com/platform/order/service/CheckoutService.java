@@ -96,6 +96,7 @@ public class CheckoutService {
             oi.setProductId(ci.getProductId());
             oi.setQuantity(ci.getQuantity());
             oi.setUnitPrice(ci.getUnitPrice());
+            oi.setCategoryId(ci.getCategoryId());
             order.getItems().add(oi);
             total = total.add(ci.getUnitPrice().multiply(BigDecimal.valueOf(ci.getQuantity())));
         }

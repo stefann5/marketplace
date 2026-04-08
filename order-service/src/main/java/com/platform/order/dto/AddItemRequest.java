@@ -10,5 +10,6 @@ public record AddItemRequest(
         @NotNull UUID productId,
         @NotNull UUID tenantId,
         @Positive int quantity,
-        @NotNull @Positive BigDecimal unitPrice
+        @NotNull @Positive BigDecimal unitPrice,
+        Long categoryId
 ) {}

@@ -239,7 +239,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       productId: this.product.id,
       tenantId: this.product.tenantId,
       quantity: 1,
-      unitPrice: this.product.price
+      unitPrice: this.product.price,
+      categoryId: this.product.categoryId
     }).subscribe({
       next: () => {
         this.addingToCart = false;

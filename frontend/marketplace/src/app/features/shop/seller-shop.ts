@@ -126,7 +126,8 @@ export class SellerShopComponent implements OnInit, OnDestroy {
       productId: product.id,
       tenantId: product.tenantId,
       quantity: 1,
-      unitPrice: product.price
+      unitPrice: product.price,
+      categoryId: product.categoryId
     }).subscribe();
   }
 

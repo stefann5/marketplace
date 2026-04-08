@@ -44,6 +44,7 @@ public class CartService {
                             item.setTenantId(request.tenantId());
                             item.setQuantity(request.quantity());
                             item.setUnitPrice(request.unitPrice());
+                            item.setCategoryId(request.categoryId());
                             cart.getItems().add(item);
                         }
                 );

@@ -4,6 +4,7 @@ export interface CartItem {
   tenantId: string;
   quantity: number;
   unitPrice: number;
+  categoryId: number | null;
 }
 
 export interface Cart {
@@ -18,6 +19,7 @@ export interface AddCartItemRequest {
   tenantId: string;
   quantity: number;
   unitPrice: number;
+  categoryId: number | null;
 }
 
 export interface UpdateCartItemRequest {
