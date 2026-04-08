@@ -1,0 +1,154 @@
+@if (loading) {
+  <div class="flex items-center justify-center h-96">
+    <p-progressSpinner />
+  </div>
+} @else {
+  <div class="p-6 flex flex-col gap-6">
+    <h2 class="text-2xl font-bold text-surface-900 m-0">Analytics</h2>
+
+    @if (revenueSummary) {
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <p-card>
+          <div class="flex flex-col gap-1">
+            <span class="text-surface-500 text-sm font-medium">Today</span>
+            <span class="text-2xl font-bold text-surface-900">{{ revenueSummary.todayRevenue | currency }}</span>
+          </div>
+        </p-card>
+        <p-card>
+          <div class="flex flex-col gap-1">
+            <span class="text-surface-500 text-sm font-medium">This Week</span>
+            <span class="text-2xl font-bold text-surface-900">{{ revenueSummary.weekRevenue | currency }}</span>
+          </div>
+        </p-card>
+        <p-card>
+          <div class="flex flex-col gap-1">
+            <span class="text-surface-500 text-sm font-medium">This Month</span>
+            <span class="text-2xl font-bold text-surface-900">{{ revenueSummary.monthRevenue | currency }}</span>
+            @if (revenueSummary.monthOverMonthChange !== 0) {
+              <span [class]="revenueSummary.monthOverMonthChange > 0 ? 'text-green-600 text-xs' : 'text-red-600 text-xs'">
+                {{ revenueSummary.monthOverMonthChange > 0 ? '+' : '' }}{{ revenueSummary.monthOverMonthChange | number:'1.1-1' }}% vs last month
+              </span>
+            }
+          </div>
+        </p-card>
+        <p-card>
+          <div class="flex flex-col gap-1">
+            <span class="text-surface-500 text-sm font-medium">All Time</span>
+            <span class="text-2xl font-bold text-surface-900">{{ revenueSummary.totalRevenue | currency }}</span>
+          </div>
+        </p-card>
+      </div>
+    }
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      @if (revenueChartData) {
+        <p-card>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-surface-900 m-0">Revenue</h3>
+            <p-selectButton [options]="periodOptions" [(ngModel)]="chartPeriod" (onChange)="onPeriodChange()"
+                            optionLabel="label" optionValue="value" [allowEmpty]="false" size="small" />
+          </div>
+          <p-chart type="line" [data]="revenueChartData" [options]="revenueChartOptions" height="300px" />
+        </p-card>
+      }
+
+      @if (orderSummary) {
+        <p-card>
+          <h3 class="text-lg font-semibold text-surface-900 m-0 mb-4">Orders</h3>
+          <div class="grid grid-cols-3 gap-3 mb-4">
+            <div class="text-center">
+              <div class="text-2xl font-bold text-surface-900">{{ orderSummary.totalOrders }}</div>
+              <div class="text-surface-500 text-sm">Total</div>
+            </div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-green-600">{{ orderSummary.fulfilledOrders }}</div>
+              <div class="text-surface-500 text-sm">Fulfilled</div>
+            </div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-orange-500">{{ orderSummary.unfulfilledOrders }}</div>
+              <div class="text-surface-500 text-sm">Pending</div>
+            </div>
+          </div>
+          @if (orderChartData) {
+            <p-chart type="bar" [data]="orderChartData" [options]="orderChartOptions" height="200px" />
+          }
+        </p-card>
+      }
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <p-card>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-surface-900 m-0">Top Products</h3>
+          <p-selectButton [options]="productSortOptions" [(ngModel)]="productSortBy" (onChange)="onProductSortChange()"
+                          optionLabel="label" optionValue="value" [allowEmpty]="false" size="small" />
+        </div>
+        <p-table [value]="topProducts" [rows]="10" styleClass="p-datatable-sm">
+          <ng-template #header>
+            <tr>
+              <th>#</th>
+              <th>Product ID</th>
+              <th class="text-right">Units Sold</th>
+              <th class="text-right">Revenue</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-product let-i="rowIndex">
+            <tr>
+              <td>{{ i + 1 }}</td>
+              <td class="font-mono text-sm">{{ product.productId | slice:0:8 }}...</td>
+              <td class="text-right">{{ product.unitsSold }}</td>
+              <td class="text-right">{{ product.revenue | currency }}</td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr><td colspan="4" class="text-center text-surface-500 p-4">No sales data yet</td></tr>
+          </ng-template>
+        </p-table>
+      </p-card>
+
+      <p-card>
+        <h3 class="text-lg font-semibold text-surface-900 m-0 mb-4">Product Views</h3>
+        <p-table [value]="productViews" [rows]="10" styleClass="p-datatable-sm">
+          <ng-template #header>
+            <tr>
+              <th>Product</th>
+              <th class="text-right">Views</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-view>
+            <tr>
+              <td>{{ view.productName }}</td>
+              <td class="text-right">{{ view.viewCount }}</td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr><td colspan="2" class="text-center text-surface-500 p-4">No view data yet</td></tr>
+          </ng-template>
+        </p-table>
+      </p-card>
+    </div>
+
+    <p-card>
+      <h3 class="text-lg font-semibold text-surface-900 m-0 mb-4">Popular Search Terms</h3>
+      <p-table [value]="searchTerms" [rows]="10" styleClass="p-datatable-sm">
+        <ng-template #header>
+          <tr>
+            <th>#</th>
+            <th>Search Term</th>
+            <th class="text-right">Count</th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-term let-i="rowIndex">
+          <tr>
+            <td>{{ i + 1 }}</td>
+            <td>{{ term.term }}</td>
+            <td class="text-right">{{ term.count }}</td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr><td colspan="3" class="text-center text-surface-500 p-4">No search data yet</td></tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+  </div>
+}
