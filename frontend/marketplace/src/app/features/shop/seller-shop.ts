@@ -65,7 +65,7 @@ export class SellerShopComponent implements OnInit, OnDestroy {
       error: () => {
         this.loading = false;
         this.cdr.detectChanges();
-        this.router.navigate(['/products']);
+        this.router.navigate(['/']);
       }
     });
   }

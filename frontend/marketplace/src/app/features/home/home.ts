@@ -7,13 +7,16 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SkeletonModule } from 'primeng/skeleton';
+import { TabsModule } from 'primeng/tabs';
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { ProductService } from '../../core/services/product.service';
 import { CategoryService } from '../../core/services/category.service';
 import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth.service';
+import { SellerService } from '../../core/services/seller.service';
 import { Product } from '../../core/models/product.model';
 import { Cart } from '../../core/models/cart.model';
+import { SellerProfile } from '../../core/models/seller.model';
 
 interface CategoryRow {
   categoryId: number;
@@ -24,7 +27,7 @@ interface CategoryRow {
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonModule, TagModule, InputNumberModule, SkeletonModule],
+  imports: [CommonModule, FormsModule, ButtonModule, TagModule, InputNumberModule, SkeletonModule, TabsModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './home.html'
 })
@@ -32,6 +35,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   categoryRows: CategoryRow[] = [];
   loading = true;
   cart: Cart | null = null;
+
+  sellers: SellerProfile[] = [];
+  sellersLoading = true;
+  logoErrors = new Set<string>();
+
   private cartSub?: Subscription;
 
   constructor(
@@ -40,6 +48,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     private categoryService: CategoryService,
     private cartService: CartService,
     private authService: AuthService,
+    private sellerService: SellerService,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
@@ -60,14 +69,15 @@ export class HomeComponent implements OnInit, OnDestroy {
       this.cdr.markForCheck();
     });
 
-    this.loadFrontpage();
+    this.loadCategories();
+    this.loadSellers();
   }
 
   ngOnDestroy(): void {
     this.cartSub?.unsubscribe();
   }
 
-  private loadFrontpage(): void {
+  private loadCategories(): void {
     forkJoin({
       topCategories: this.analyticsService.getTopCategories(5),
       categoryMap: this.categoryService.getCategoryMap()
@@ -102,16 +112,38 @@ export class HomeComponent implements OnInit, OnDestroy {
     });
   }
 
+  private loadSellers(): void {
+    this.sellerService.getAll().subscribe({
+      next: (sellers) => {
+        this.sellers = sellers;
+        this.sellersLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.sellersLoading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  visitShop(seller: SellerProfile): void {
+    this.router.navigate(['/shop', seller.slug]);
+  }
+
+  onLogoError(sellerId: string): void {
+    this.logoErrors.add(sellerId);
+  }
+
+  hasLogoError(sellerId: string): boolean {
+    return this.logoErrors.has(sellerId);
+  }
+
   viewProduct(id: string): void {
     this.router.navigate(['/products', id]);
   }
 
   seeMore(categoryId: number): void {
     this.router.navigate(['/products/search'], { queryParams: { categoryId } });
-  }
-
-  browseSellers(): void {
-    this.router.navigate(['/sellers']);
   }
 
   getStockSeverity(stock: number): 'success' | 'warn' | 'danger' {
@@ -166,9 +198,5 @@ export class HomeComponent implements OnInit, OnDestroy {
     } else {
       this.cartService.updateItem(item.id, { quantity: value }).subscribe();
     }
-  }
-
-  isBuyer(): boolean {
-    return this.authService.getUserRole() !== 'SELLER';
   }
 }
