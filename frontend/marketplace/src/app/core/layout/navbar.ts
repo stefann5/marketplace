@@ -124,6 +124,14 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
   }
 
+  isInSellerShop(): boolean {
+    return !!this.resolveSellerSlug();
+  }
+
+  goToMarketplace(): void {
+    this.router.navigate(['/']);
+  }
+
   private resolveSellerSlug(): string | undefined {
     if (this.sellerSlug) return this.sellerSlug;
     const match = this.router.url.match(/^\/shop\/([^/?#]+)/);

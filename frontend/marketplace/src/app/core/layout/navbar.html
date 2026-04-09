@@ -12,6 +12,10 @@
     </p-iconfield>
   </div>
 
+  @if (isInSellerShop()) {
+    <p-button label="Back to Marketplace" icon="pi pi-arrow-left" [text]="true" (onClick)="goToMarketplace()" />
+  }
+
   <div class="shrink-0">
     @if (loggedIn) {
       <div class="flex items-center gap-2">

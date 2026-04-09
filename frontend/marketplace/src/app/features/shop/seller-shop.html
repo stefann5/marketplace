@@ -40,7 +40,8 @@
         <p>This seller has no products yet.</p>
       </div>
     } @else {
-      <p-dataview [value]="products" layout="grid">
+      <p-dataview [value]="products" [paginator]="true" [rows]="rows" [totalRecords]="totalRecords"
+        [lazy]="true" (onLazyLoad)="onPageChange($event)" [first]="first" layout="grid">
         <ng-template #grid let-items>
           <div class="grid grid-cols-12 gap-4">
             @for (product of items; track product.id) {

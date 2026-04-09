@@ -26,6 +26,9 @@ export class SellerShopComponent implements OnInit, OnDestroy {
   seller: SellerProfile | null = null;
   logoLoadFailed = false;
   products: Product[] = [];
+  totalRecords = 0;
+  rows = 12;
+  first = 0;
   loading = true;
   cart: Cart | null = null;
   categoryMap = new Map<number, string>();
@@ -71,15 +74,16 @@ export class SellerShopComponent implements OnInit, OnDestroy {
     this.cartSub?.unsubscribe();
   }
 
-  loadProducts(): void {
+  loadProducts(page: number = 0): void {
     if (!this.seller) return;
     this.productService.search({
       tenantId: this.seller.tenantId,
-      page: 0,
-      size: 100
+      page,
+      size: this.rows
     }).subscribe({
-      next: (page) => {
-        this.products = page.content;
+      next: (res) => {
+        this.products = res.content;
+        this.totalRecords = res.totalElements;
         this.loading = false;
         this.cdr.detectChanges();
       },
@@ -88,6 +92,11 @@ export class SellerShopComponent implements OnInit, OnDestroy {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  onPageChange(event: any): void {
+    this.first = event.first;
+    this.loadProducts(event.first / this.rows);
   }
 
   onLogoError(): void {
