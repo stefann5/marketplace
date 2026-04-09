@@ -36,3 +36,9 @@ export interface SearchTerm {
   term: string;
   count: number;
 }
+
+export interface TopCategory {
+  categoryId: number;
+  totalUnitsSold: number;
+  totalRevenue: number;
+}

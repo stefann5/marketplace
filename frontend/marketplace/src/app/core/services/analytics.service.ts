@@ -8,7 +8,8 @@ import {
   OrderSummary,
   TopProduct,
   ProductView,
-  SearchTerm
+  SearchTerm,
+  TopCategory
 } from '../models/analytics.model';
 
 @Injectable({ providedIn: 'root' })
@@ -41,5 +42,10 @@ export class AnalyticsService {
 
   getSearchTerms(): Observable<SearchTerm[]> {
     return this.http.get<SearchTerm[]>(`${this.apiUrl}/customers/search-terms`);
+  }
+
+  getTopCategories(limit: number = 5): Observable<TopCategory[]> {
+    const params = new HttpParams().set('limit', limit.toString());
+    return this.http.get<TopCategory[]>(`${this.apiUrl}/categories/top`, { params });
   }
 }

@@ -96,7 +96,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
       this.router.navigate(['/shop', sellerSlug]);
       return;
     }
-    this.router.navigate(['/products']);
+    this.router.navigate(['/']);
   }
 
   onSearch(): void {

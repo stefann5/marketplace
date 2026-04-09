@@ -8,16 +8,19 @@ import { adminGuard } from './core/guards/admin.guard';
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./features/home/home').then(m => m.HomeComponent),
+    loadComponent: () => import('./core/layout/buyer-layout').then(m => m.BuyerLayoutComponent),
+    children: [
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () => import('./features/home/home').then(m => m.HomeComponent)
+      }
+    ]
   },
   {
     path: 'products',
     loadComponent: () => import('./core/layout/buyer-layout').then(m => m.BuyerLayoutComponent),
     children: [
-      {
-        path: '',
-        loadComponent: () => import('./features/products/product-list/product-list').then(m => m.ProductListComponent)
-      },
       {
         path: 'search',
         loadComponent: () => import('./features/products/product-search/product-search').then(m => m.ProductSearchComponent)

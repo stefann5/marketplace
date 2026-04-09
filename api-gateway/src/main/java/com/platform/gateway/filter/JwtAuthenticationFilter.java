@@ -36,7 +36,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             "/api/products",
             "/api/reviews",
             "/api/categories",
-            "/api/sellers"
+            "/api/sellers",
+            "/api/analytics/categories"
     );
 
     public JwtAuthenticationFilter(@Value("${jwt.secret}") String secret) {
