@@ -1,0 +1,55 @@
+-- All seeded users use password: password123
+-- BCrypt hash: $2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u
+
+INSERT INTO users (id, email, password_hash, role, tenant_id, email_verified, email_verified_at, created_at) VALUES
+
+-- =============================================
+-- SELLER ACCOUNTS (20)
+-- user_id pattern:   a0000000-0000-0000-0000-00000000XXXX
+-- tenant_id pattern: b0000000-0000-0000-0000-00000000XXXX
+-- =============================================
+('a0000000-0000-0000-0000-000000000001', 'seller1@marketplace.com',  '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000001', true, '2025-01-01 00:00:00', '2025-01-01 00:00:00'),
+('a0000000-0000-0000-0000-000000000002', 'seller2@marketplace.com',  '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000002', true, '2025-01-02 00:00:00', '2025-01-02 00:00:00'),
+('a0000000-0000-0000-0000-000000000003', 'seller3@marketplace.com',  '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000003', true, '2025-01-03 00:00:00', '2025-01-03 00:00:00'),
+('a0000000-0000-0000-0000-000000000004', 'seller4@marketplace.com',  '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000004', true, '2025-01-04 00:00:00', '2025-01-04 00:00:00'),
+('a0000000-0000-0000-0000-000000000005', 'seller5@marketplace.com',  '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000005', true, '2025-01-05 00:00:00', '2025-01-05 00:00:00'),
+('a0000000-0000-0000-0000-000000000006', 'seller6@marketplace.com',  '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000006', true, '2025-01-06 00:00:00', '2025-01-06 00:00:00'),
+('a0000000-0000-0000-0000-000000000007', 'seller7@marketplace.com',  '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000007', true, '2025-01-07 00:00:00', '2025-01-07 00:00:00'),
+('a0000000-0000-0000-0000-000000000008', 'seller8@marketplace.com',  '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000008', true, '2025-01-08 00:00:00', '2025-01-08 00:00:00'),
+('a0000000-0000-0000-0000-000000000009', 'seller9@marketplace.com',  '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000009', true, '2025-01-09 00:00:00', '2025-01-09 00:00:00'),
+('a0000000-0000-0000-0000-000000000010', 'seller10@marketplace.com', '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000010', true, '2025-01-10 00:00:00', '2025-01-10 00:00:00'),
+('a0000000-0000-0000-0000-000000000011', 'seller11@marketplace.com', '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000011', true, '2025-01-11 00:00:00', '2025-01-11 00:00:00'),
+('a0000000-0000-0000-0000-000000000012', 'seller12@marketplace.com', '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000012', true, '2025-01-12 00:00:00', '2025-01-12 00:00:00'),
+('a0000000-0000-0000-0000-000000000013', 'seller13@marketplace.com', '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000013', true, '2025-01-13 00:00:00', '2025-01-13 00:00:00'),
+('a0000000-0000-0000-0000-000000000014', 'seller14@marketplace.com', '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000014', true, '2025-01-14 00:00:00', '2025-01-14 00:00:00'),
+('a0000000-0000-0000-0000-000000000015', 'seller15@marketplace.com', '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000015', true, '2025-01-15 00:00:00', '2025-01-15 00:00:00'),
+('a0000000-0000-0000-0000-000000000016', 'seller16@marketplace.com', '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000016', true, '2025-01-16 00:00:00', '2025-01-16 00:00:00'),
+('a0000000-0000-0000-0000-000000000017', 'seller17@marketplace.com', '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000017', true, '2025-01-17 00:00:00', '2025-01-17 00:00:00'),
+('a0000000-0000-0000-0000-000000000018', 'seller18@marketplace.com', '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000018', true, '2025-01-18 00:00:00', '2025-01-18 00:00:00'),
+('a0000000-0000-0000-0000-000000000019', 'seller19@marketplace.com', '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000019', true, '2025-01-19 00:00:00', '2025-01-19 00:00:00'),
+('a0000000-0000-0000-0000-000000000020', 'seller20@marketplace.com', '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'SELLER', 'b0000000-0000-0000-0000-000000000020', true, '2025-01-20 00:00:00', '2025-01-20 00:00:00'),
+
+-- =============================================
+-- ADMIN ACCOUNT (1)
+-- =============================================
+('a0000000-0000-0000-0000-000000000100', 'admin@marketplace.com', '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'ADMIN', NULL, true, '2025-01-01 00:00:00', '2025-01-01 00:00:00')
+
+ON CONFLICT (id) DO NOTHING;
+
+-- =============================================
+-- BUYER ACCOUNTS (300)
+-- user_id pattern: d0000000-0000-0000-0000-00000000XXXX
+-- email:           buyer1@marketplace.com .. buyer300@marketplace.com
+-- =============================================
+INSERT INTO users (id, email, password_hash, role, tenant_id, email_verified, email_verified_at, created_at)
+SELECT
+    ('d0000000-0000-0000-0000-' || lpad(g::text, 12, '0'))::uuid,
+    'buyer' || g || '@marketplace.com',
+    '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u',
+    'BUYER',
+    NULL,
+    true,
+    '2025-01-01 00:00:00',
+    '2025-01-01 00:00:00'
+FROM generate_series(1, 300) g
+ON CONFLICT (id) DO NOTHING;
