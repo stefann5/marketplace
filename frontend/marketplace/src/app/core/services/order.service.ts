@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Order } from '../models/order.model';
+import { Page } from '../models/product.model';
 
 @Injectable({ providedIn: 'root' })
 export class OrderService {
@@ -14,14 +15,15 @@ export class OrderService {
     return this.http.post<Order[]>(`${this.apiUrl}/checkout`, {});
   }
 
-  getBuyerOrders(): Observable<Order[]> {
-    return this.http.get<Order[]>(this.apiUrl);
+  getBuyerOrders(page: number = 0, size: number = 10): Observable<Page<Order>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<Page<Order>>(this.apiUrl, { params });
   }
 
-  getSellerOrders(status?: string): Observable<Order[]> {
-    let params = new HttpParams();
+  getSellerOrders(status?: string, page: number = 0, size: number = 10): Observable<Page<Order>> {
+    let params = new HttpParams().set('page', page).set('size', size);
     if (status) params = params.set('status', status);
-    return this.http.get<Order[]>(`${this.apiUrl}/seller`, { params });
+    return this.http.get<Page<Order>>(`${this.apiUrl}/seller`, { params });
   }
 
   fulfillOrder(orderId: string): Observable<Order> {

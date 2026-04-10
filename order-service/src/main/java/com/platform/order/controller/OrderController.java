@@ -5,6 +5,7 @@ import com.platform.order.enums.OrderStatus;
 import com.platform.order.service.CheckoutService;
 import com.platform.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,15 +28,20 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<List<OrderResponse>> getBuyerOrders(@RequestHeader("X-User-Id") UUID userId) {
-        return ResponseEntity.ok(orderService.getBuyerOrders(userId));
+    public ResponseEntity<Page<OrderResponse>> getBuyerOrders(
+            @RequestHeader("X-User-Id") UUID userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(orderService.getBuyerOrdersPaged(userId, page, size));
     }
 
     @GetMapping("/seller")
-    public ResponseEntity<List<OrderResponse>> getSellerOrders(
+    public ResponseEntity<Page<OrderResponse>> getSellerOrders(
             @RequestHeader("X-Tenant-Id") UUID tenantId,
-            @RequestParam(required = false) OrderStatus status) {
-        return ResponseEntity.ok(orderService.getSellerOrders(tenantId, status));
+            @RequestParam(required = false) OrderStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(orderService.getSellerOrdersPaged(tenantId, status, page, size));
     }
 
     @PatchMapping("/{orderId}/fulfill")

@@ -62,6 +62,8 @@
           </div>
         }
       </div>
+      <p-paginator [first]="page * pageSize" [rows]="pageSize" [totalRecords]="totalRecords"
+        [rowsPerPageOptions]="[5, 10, 20, 50]" (onPageChange)="onPageChange($event)" styleClass="mt-4" />
     }
   </div>
 </div>
