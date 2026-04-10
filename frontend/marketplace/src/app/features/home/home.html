@@ -81,7 +81,7 @@
                                 <p-button icon="pi pi-plus" [rounded]="true" [outlined]="true" size="small"
                                   (onClick)="changeQuantity($event, product, 1)" />
                               </div>
-                            } @else {
+                            } @else if (!isSeller) {
                               <button pButton icon="pi pi-shopping-cart" label="Add to Cart"
                                 [disabled]="product.stock === 0"
                                 (click)="addToCart($event, product)"

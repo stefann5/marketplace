@@ -35,6 +35,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   categoryRows: CategoryRow[] = [];
   loading = true;
   cart: Cart | null = null;
+  isSeller = false;
 
   sellers: SellerProfile[] = [];
   sellersLoading = true;
@@ -55,6 +56,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const role = this.authService.getUserRole();
+    this.isSeller = role === 'SELLER';
     if (role === 'SELLER') {
       this.router.navigate(['/dashboard/products']);
       return;
