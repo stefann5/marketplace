@@ -35,3 +35,21 @@ INSERT INTO users (id, email, password_hash, role, tenant_id, email_verified, em
 ('a0000000-0000-0000-0000-000000000100', 'admin@marketplace.com', '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u', 'ADMIN', NULL, true, '2025-01-01 00:00:00', '2025-01-01 00:00:00')
 
 ON CONFLICT (id) DO NOTHING;
+
+-- =============================================
+-- BUYER ACCOUNTS (50)
+-- user_id pattern: d0000000-0000-0000-0000-00000000XXXX
+-- email:           buyer1@marketplace.com .. buyer50@marketplace.com
+-- =============================================
+INSERT INTO users (id, email, password_hash, role, tenant_id, email_verified, email_verified_at, created_at)
+SELECT
+    ('d0000000-0000-0000-0000-' || lpad(g::text, 12, '0'))::uuid,
+    'buyer' || g || '@marketplace.com',
+    '$2b$10$KRoH2OwgLpgx6HBl6x407.FWo6hHlkcPUIvFeCuNFthNsaeE2xm8u',
+    'BUYER',
+    NULL,
+    true,
+    '2025-01-01 00:00:00',
+    '2025-01-01 00:00:00'
+FROM generate_series(1, 50) g
+ON CONFLICT (id) DO NOTHING;
