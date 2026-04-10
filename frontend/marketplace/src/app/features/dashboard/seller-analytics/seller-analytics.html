@@ -54,7 +54,11 @@
 
       @if (orderSummary) {
         <p-card>
-          <h3 class="text-lg font-semibold text-surface-900 m-0 mb-4">Orders</h3>
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-surface-900 m-0">Orders</h3>
+            <p-selectButton [options]="periodOptions" [(ngModel)]="orderChartPeriod" (onChange)="onOrderPeriodChange()"
+                            optionLabel="label" optionValue="value" [allowEmpty]="false" size="small" />
+          </div>
           <div class="grid grid-cols-3 gap-3 mb-4">
             <div class="text-center">
               <div class="text-2xl font-bold text-surface-900">{{ orderSummary.totalOrders }}</div>
@@ -69,8 +73,10 @@
               <div class="text-surface-500 text-sm">Pending</div>
             </div>
           </div>
-          @if (orderChartData) {
+          @if (orderChartData && orderSummary.trendValues.length > 0) {
             <p-chart type="bar" [data]="orderChartData" [options]="orderChartOptions" height="200px" />
+          } @else {
+            <div class="text-center text-surface-500 py-8">No order data for the selected period</div>
           }
         </p-card>
       }
@@ -87,7 +93,7 @@
           <ng-template #header>
             <tr>
               <th>#</th>
-              <th>Product ID</th>
+              <th>Product</th>
               <th class="text-right">Units Sold</th>
               <th class="text-right">Revenue</th>
             </tr>
@@ -95,7 +101,7 @@
           <ng-template #body let-product let-i="rowIndex">
             <tr>
               <td>{{ i + 1 }}</td>
-              <td class="font-mono text-sm">{{ product.productId | slice:0:8 }}...</td>
+              <td>{{ product.productName || (product.productId | slice:0:8) + '...' }}</td>
               <td class="text-right">{{ product.unitsSold }}</td>
               <td class="text-right">{{ product.revenue | currency }}</td>
             </tr>

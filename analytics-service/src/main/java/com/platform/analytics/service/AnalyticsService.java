@@ -120,13 +120,32 @@ public class AnalyticsService {
         return new RevenueChartResponse(labels, values);
     }
 
-    public OrderSummaryResponse getOrderSummary(String tenantId) {
+    public OrderSummaryResponse getOrderSummary(String tenantId, String period) {
         long totalOrders = countDistinctOrders(tenantId, EventType.ORDER_PLACED);
         long fulfilledOrders = countDistinctOrders(tenantId, EventType.ORDER_FULFILLED);
         long unfulfilledOrders = totalOrders - fulfilledOrders;
 
-        Instant from = Instant.now().atZone(ZoneOffset.UTC).minusDays(29)
-                .toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant();
+        ZonedDateTime zdt = Instant.now().atZone(ZoneOffset.UTC);
+        Instant from;
+        String dateFormat;
+        switch (period == null ? "month" : period) {
+            case "week" -> {
+                from = zdt.minusDays(6).toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant();
+                dateFormat = "%Y-%m-%d";
+            }
+            case "year" -> {
+                from = zdt.minusMonths(11).withDayOfMonth(1).toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant();
+                dateFormat = "%Y-%m";
+            }
+            case "all" -> {
+                from = Instant.EPOCH;
+                dateFormat = "%Y-%m";
+            }
+            default -> {
+                from = zdt.minusDays(29).toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant();
+                dateFormat = "%Y-%m-%d";
+            }
+        }
 
         Aggregation trendAgg = Aggregation.newAggregation(
                 Aggregation.match(Criteria.where("tenantId").is(tenantId)
@@ -135,7 +154,7 @@ public class AnalyticsService {
                 Aggregation.group("orderId")
                         .first("timestamp").as("timestamp"),
                 Aggregation.project()
-                        .and(DateOperators.DateToString.dateOf("timestamp").toString("%Y-%m-%d")).as("day"),
+                        .and(DateOperators.DateToString.dateOf("timestamp").toString(dateFormat)).as("day"),
                 Aggregation.group("day").count().as("count"),
                 Aggregation.sort(Sort.Direction.ASC, "_id")
         );
@@ -170,7 +189,8 @@ public class AnalyticsService {
                         .and("eventType").is(EventType.ORDER_PLACED.name())),
                 Aggregation.group("productId")
                         .sum("quantity").as("totalUnits")
-                        .sum(ArithmeticOperators.Multiply.valueOf("unitPrice").multiplyBy("quantity")).as("totalRevenue"),
+                        .sum(ArithmeticOperators.Multiply.valueOf("unitPrice").multiplyBy("quantity")).as("totalRevenue")
+                        .first("productName").as("productName"),
                 Aggregation.sort(Sort.Direction.DESC, sortField),
                 Aggregation.limit(limit)
         );
@@ -178,6 +198,7 @@ public class AnalyticsService {
         var results = mongoTemplate.aggregate(agg, COLLECTION, Document.class).getMappedResults();
         return results.stream().map(doc -> new TopProductResponse(
                 doc.getString("_id"),
+                doc.getString("productName"),
                 doc.get("totalUnits", Number.class).longValue(),
                 BigDecimal.valueOf(doc.get("totalRevenue", Number.class).doubleValue()).setScale(2, RoundingMode.HALF_UP)
         )).toList();
