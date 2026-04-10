@@ -10,6 +10,7 @@ OUTPUT_FILE = "output/products.json"
 # ── Image Generation ─────────────────────────────────
 IMAGE_SERVER_URL = "http://localhost:8532"
 IMAGE_DIR = "output/images"
+SELLER_LOGO_DIR = "output/seller_logos"
 IMAGE_SIZE = 512
 
 # ── Databases ────────────────────────────────────────
@@ -19,6 +20,7 @@ DB_USER = "postgres"
 DB_PASS = "admin"
 CATALOG_DB = "catalog_db"
 ORDER_DB = "order_db"
+SELLER_DB = "seller_db"
 
 # ── MongoDB (analytics) ──────────────────────────────
 MONGO_URI = "mongodb://localhost:27017"
@@ -30,20 +32,35 @@ MINIO_ENDPOINT = "localhost:9000"
 MINIO_ACCESS_KEY = "minioadmin"
 MINIO_SECRET_KEY = "minioadmin"
 MINIO_BUCKET = "product-images"
+MINIO_SELLER_BUCKET = "seller-documents"   # used by seller-service for logos + docs
 MINIO_PUBLIC_URL = "http://localhost:9000"
 
 # ── Buyers ───────────────────────────────────────────
-BUYER_COUNT = 50  # must match the count seeded in auth-service/data.sql
+BUYER_COUNT = 300  # must match the count seeded in auth-service/data.sql
+
+# ── Reviews ──────────────────────────────────────────
+REVIEWS_PER_DEPARTMENT = 50         # 40 positive / 5 neutral / 5 negative
+REVIEWS_OUTPUT_FILE = "output/reviews.json"
 
 # ── UUID helpers ─────────────────────────────────────
 NAMESPACE = uuid.UUID("12345678-1234-1234-1234-123456789abc")
 
 def seller_tenant_id(n): return f"b0000000-0000-0000-0000-{n:012d}"
 
+def seller_profile_id(n): return f"c0000000-0000-0000-0000-{n:012d}"
+
 def buyer_user_id(n): return f"d0000000-0000-0000-0000-{n:012d}"
+
+def buyer_email_from_user_id(user_id):
+    """Reverse of buyer_user_id — d0000000-...-000000000123  →  buyer123@marketplace.com"""
+    n = int(user_id.split("-")[-1])
+    return f"buyer{n}@marketplace.com"
 
 def product_uuid(seller_n, product_name):
     return str(uuid.uuid5(NAMESPACE, f"product-{seller_n}-{product_name}"))
+
+# ── Departments (deterministic order from CATEGORIES) ──
+# Defined after CATEGORIES below.
 
 # ── Categories (id → name, parent_name) ──────────────
 # Only subcategories — products get assigned to these
@@ -207,6 +224,20 @@ CATEGORIES = {
     182: ("Beading & Jewellery Making", "Arts, Crafts & Hobbies"),
     183: ("Candle & Soap Making", "Arts, Crafts & Hobbies"),
 }
+
+# Top-level department names, in stable order of first appearance in CATEGORIES.
+# Used by generate_reviews.py and seed_reviews.py to bucket reviews.
+def _build_departments():
+    seen = []
+    for _name, parent in CATEGORIES.values():
+        if parent not in seen:
+            seen.append(parent)
+    return seen
+
+DEPARTMENTS = _build_departments()
+
+def department_for_category(cat_id):
+    return CATEGORIES[cat_id][1]
 
 # ── Sellers & their category assignments ─────────────
 SELLERS = [

@@ -37,9 +37,9 @@ INSERT INTO users (id, email, password_hash, role, tenant_id, email_verified, em
 ON CONFLICT (id) DO NOTHING;
 
 -- =============================================
--- BUYER ACCOUNTS (50)
+-- BUYER ACCOUNTS (300)
 -- user_id pattern: d0000000-0000-0000-0000-00000000XXXX
--- email:           buyer1@marketplace.com .. buyer50@marketplace.com
+-- email:           buyer1@marketplace.com .. buyer300@marketplace.com
 -- =============================================
 INSERT INTO users (id, email, password_hash, role, tenant_id, email_verified, email_verified_at, created_at)
 SELECT
@@ -51,5 +51,5 @@ SELECT
     true,
     '2025-01-01 00:00:00',
     '2025-01-01 00:00:00'
-FROM generate_series(1, 50) g
+FROM generate_series(1, 300) g
 ON CONFLICT (id) DO NOTHING;
