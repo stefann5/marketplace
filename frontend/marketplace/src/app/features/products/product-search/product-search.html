@@ -74,7 +74,8 @@
                     }
                 </span>
                 <div class="flex items-center gap-4">
-                    <p-selectbutton [(ngModel)]="layout" [options]="layoutOptions" [allowEmpty]="false">
+                    <p-selectbutton [(ngModel)]="layout" [options]="layoutOptions" [allowEmpty]="false"
+                        (onChange)="onLayoutChange()">
                         <ng-template #item let-item>
                             <i class="pi" [ngClass]="{ 'pi-bars': item === 'list', 'pi-table': item === 'grid' }"></i>
                         </ng-template>
@@ -120,6 +121,13 @@
                                             <span class="text-sm text-muted">{{ getCategoryName(product.categoryId)
                                                 }}</span>
                                             }
+                                            @if (getSellerName(product.tenantId)) {
+                                            <div class="text-xs text-muted mt-1">
+                                                <i class="pi pi-shop text-xs mr-1"></i>
+                                                <span class="hover:underline cursor-pointer"
+                                                    (click)="visitSellerShop($event, product.tenantId)">{{ getSellerName(product.tenantId) }}</span>
+                                            </div>
+                                            }
                                         </div>
                                         <div class="bg-surface-100 p-1" style="border-radius: 30px">
                                             <div class="bg-surface-0 flex items-center gap-2 justify-center py-1 px-2"
@@ -144,7 +152,7 @@
                                                 <p-button icon="pi pi-plus" [rounded]="true" [outlined]="true" size="small"
                                                   (onClick)="changeQuantity($event, product, 1)" />
                                               </div>
-                                            } @else {
+                                            } @else if (!isSeller) {
                                               <button pButton icon="pi pi-shopping-cart" label="Add to Cart"
                                                 [disabled]="product.stock === 0"
                                                 (click)="addToCart($event, product)"
@@ -184,6 +192,13 @@
                                     @if (getCategoryName(product.categoryId)) {
                                     <span class="text-sm text-muted">{{ getCategoryName(product.categoryId) }}</span>
                                     }
+                                    @if (getSellerName(product.tenantId)) {
+                                    <div class="text-xs text-muted mt-1">
+                                        <i class="pi pi-shop text-xs mr-1"></i>
+                                        <span class="hover:underline cursor-pointer"
+                                            (click)="visitSellerShop($event, product.tenantId)">{{ getSellerName(product.tenantId) }}</span>
+                                    </div>
+                                    }
                                 </div>
                                 <div class="bg-surface-100 p-1" style="border-radius: 30px">
                                     <div class="bg-surface-0 flex items-center gap-2 justify-center py-1 px-2"
@@ -206,7 +221,7 @@
                                         <p-button icon="pi pi-plus" [rounded]="true" [outlined]="true" size="small"
                                           (onClick)="changeQuantity($event, product, 1)" />
                                       </div>
-                                    } @else {
+                                    } @else if (!isSeller) {
                                       <button pButton icon="pi pi-shopping-cart" label="Add to Cart"
                                         [disabled]="product.stock === 0"
                                         (click)="addToCart($event, product)"

@@ -16,8 +16,10 @@ import { ProductService } from '../../../core/services/product.service';
 import { CategoryService } from '../../../core/services/category.service';
 import { CartService } from '../../../core/services/cart.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { SellerService } from '../../../core/services/seller.service';
 import { Product } from '../../../core/models/product.model';
 import { Cart } from '../../../core/models/cart.model';
+import { SellerProfile } from '../../../core/models/seller.model';
 
 interface SortOption {
   label: string;
@@ -46,8 +48,13 @@ export class ProductSearchComponent implements OnInit, OnDestroy {
   layout: 'list' | 'grid' = 'grid';
   layoutOptions: string[] = ['list', 'grid'];
   categoryMap = new Map<number, string>();
+  sellerMap = new Map<string, SellerProfile>();
   cart: Cart | null = null;
+  isSeller = false;
   private cartSub?: Subscription;
+  private routeSub?: Subscription;
+  private suppressSync = false;
+  private categoriesReady = false;
 
   searchName = '';
   selectedCategoryNode: TreeNode | null = null;
@@ -66,7 +73,6 @@ export class ProductSearchComponent implements OnInit, OnDestroy {
   selectedSort: SortOption = this.sortOptions[0];
 
   categoryNodes: TreeNode[] = [];
-  private pendingCategoryId: number | null = null;
   ratingOptions = [
     { label: 'Any', value: null },
     { label: '4+ Stars', value: 4 },
@@ -80,50 +86,100 @@ export class ProductSearchComponent implements OnInit, OnDestroy {
     private categoryService: CategoryService,
     private cartService: CartService,
     private authService: AuthService,
+    private sellerService: SellerService,
     private route: ActivatedRoute,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.isSeller = this.authService.getUserRole() === 'SELLER';
     this.categoryService.getCategoryMap().subscribe(map => {
       this.categoryMap = map;
+      this.cdr.markForCheck();
+    });
+    this.sellerService.getTenantMap().subscribe(map => {
+      this.sellerMap = map;
       this.cdr.markForCheck();
     });
     this.cartSub = this.cartService.cartState$.subscribe(cart => {
       this.cart = cart;
       this.cdr.markForCheck();
     });
-    this.route.queryParams.subscribe(params => {
-      this.searchName = params['name'] ?? '';
-      this.tenantId = params['tenantId'] ?? undefined;
-      if (this.forcedTenantId) this.tenantId = this.forcedTenantId;
-
-      if (params['categoryId']) {
-        const catId = Number(params['categoryId']);
-        this.pendingCategoryId = Number.isFinite(catId) ? catId : null;
-      } else {
-        this.pendingCategoryId = null;
-        this.selectedCategoryNode = null;
-      }
-
-      if (this.pendingCategoryId !== null && this.categoryNodes.length > 0) {
-        this.selectedCategoryNode = this.findNodeByKey(this.categoryNodes, String(this.pendingCategoryId));
-      }
-
-      this.page = 0;
-      this.loadProducts();
-      this.cdr.markForCheck();
-    });
 
     this.categoryService.getTreeNodes().subscribe(nodes => {
       this.categoryNodes = this.makeAllSelectable(nodes);
-      if (this.pendingCategoryId !== null) {
-        this.selectedCategoryNode = this.findNodeByKey(this.categoryNodes, String(this.pendingCategoryId));
-        this.page = 0;
-        this.loadProducts();
-      }
+      this.categoriesReady = true;
+      this.applyParams(this.route.snapshot.queryParams);
       this.cdr.markForCheck();
+    });
+
+    this.routeSub = this.route.queryParams.subscribe(params => {
+      if (this.suppressSync) {
+        this.suppressSync = false;
+        return;
+      }
+      if (this.categoriesReady) {
+        this.applyParams(params);
+      }
+    });
+  }
+
+  private applyParams(params: any): void {
+    this.searchName = params['name'] ?? '';
+    this.tenantId = params['tenantId'] ?? undefined;
+    if (this.forcedTenantId) this.tenantId = this.forcedTenantId;
+
+    const catId = params['categoryId'] ? Number(params['categoryId']) : null;
+    this.selectedCategoryNode = catId !== null && Number.isFinite(catId)
+      ? this.findNodeByKey(this.categoryNodes, String(catId))
+      : null;
+
+    const minPrice = params['minPrice'] != null ? Number(params['minPrice']) : 0;
+    const maxPrice = params['maxPrice'] != null ? Number(params['maxPrice']) : 10000;
+    this.priceRange = [
+      Number.isFinite(minPrice) ? minPrice : 0,
+      Number.isFinite(maxPrice) ? maxPrice : 10000
+    ];
+
+    const rating = params['minRating'] != null ? Number(params['minRating']) : null;
+    this.minRating = rating !== null && Number.isFinite(rating) ? rating : null;
+
+    const sortParam = params['sort'];
+    const matchedSort = sortParam ? this.sortOptions.find(o => o.value === sortParam) : undefined;
+    this.selectedSort = matchedSort ?? this.sortOptions[0];
+
+    const pageParam = params['page'] != null ? Number(params['page']) : 0;
+    this.page = Number.isFinite(pageParam) && pageParam >= 0 ? pageParam : 0;
+
+    const rowsParam = params['size'] != null ? Number(params['size']) : 20;
+    this.rows = Number.isFinite(rowsParam) && rowsParam > 0 ? rowsParam : 20;
+
+    const layoutParam = params['layout'];
+    this.layout = layoutParam === 'list' ? 'list' : 'grid';
+
+    this.loadProducts();
+  }
+
+  private syncUrl(): void {
+    const queryParams: any = {
+      name: this.searchName || null,
+      categoryId: this.selectedCategoryNode?.data ?? null,
+      minPrice: this.priceRange[0] > 0 ? this.priceRange[0] : null,
+      maxPrice: this.priceRange[1] < 10000 ? this.priceRange[1] : null,
+      minRating: this.minRating ?? null,
+      sort: this.selectedSort.value !== this.sortOptions[0].value ? this.selectedSort.value : null,
+      page: this.page > 0 ? this.page : null,
+      size: this.rows !== 20 ? this.rows : null,
+      layout: this.layout !== 'grid' ? this.layout : null,
+      tenantId: this.forcedTenantId ? null : (this.tenantId ?? null)
+    };
+    this.suppressSync = true;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams,
+      queryParamsHandling: 'merge',
+      replaceUrl: true
     });
   }
 
@@ -148,17 +204,26 @@ export class ProductSearchComponent implements OnInit, OnDestroy {
   }
 
   onPageChange(event: any): void {
-    this.page = event.first / this.rows;
+    const newPage = event.first / this.rows;
+    if (newPage === this.page) return;
+    this.page = newPage;
+    this.syncUrl();
     this.loadProducts();
   }
 
   onSortChange(): void {
     this.page = 0;
+    this.syncUrl();
     this.loadProducts();
+  }
+
+  onLayoutChange(): void {
+    this.syncUrl();
   }
 
   applyFilters(): void {
     this.page = 0;
+    this.syncUrl();
     this.loadProducts();
   }
 
@@ -166,7 +231,9 @@ export class ProductSearchComponent implements OnInit, OnDestroy {
     this.selectedCategoryNode = null;
     this.priceRange = [0, 10000];
     this.minRating = null;
+    this.searchName = '';
     this.page = 0;
+    this.syncUrl();
     this.loadProducts();
   }
 
@@ -187,7 +254,21 @@ export class ProductSearchComponent implements OnInit, OnDestroy {
       });
       return;
     }
-    this.router.navigate(['/products', id]);
+    this.router.navigate(['/products', id], {
+      queryParams: { returnUrl: this.router.url }
+    });
+  }
+
+  visitSellerShop(event: Event, tenantId: string): void {
+    event.stopPropagation();
+    const seller = this.sellerMap.get(tenantId);
+    if (seller) {
+      this.router.navigate(['/shop', seller.slug]);
+    }
+  }
+
+  getSellerName(tenantId: string): string {
+    return this.sellerMap.get(tenantId)?.companyName ?? '';
   }
 
   getCategoryName(categoryId: number | null): string {
@@ -278,5 +359,6 @@ export class ProductSearchComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.cartSub?.unsubscribe();
+    this.routeSub?.unsubscribe();
   }
 }
