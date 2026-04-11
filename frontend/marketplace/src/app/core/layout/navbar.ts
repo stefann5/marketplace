@@ -83,6 +83,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.router.navigate(['/login']);
   }
 
+  goToCart(): void {
+    const currentUrl = this.router.url;
+    const queryParams = currentUrl.startsWith('/cart') ? {} : { returnUrl: currentUrl };
+    this.router.navigate(['/cart'], { queryParams });
+  }
+
   logout(): void {
     this.cartService.clearCount();
     this.loggedIn = false;

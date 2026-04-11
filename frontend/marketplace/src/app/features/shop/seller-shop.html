@@ -50,13 +50,11 @@
                   class="flex flex-col border border-surface-200 bg-surface-0 rounded cursor-pointer hover:shadow-lg transition-shadow w-full"
                   (click)="viewProduct(product)">
                   <div class="bg-surface-50 flex justify-center rounded p-4">
-                    <div class="relative w-full">
+                    <div class="relative w-full aspect-square">
                       @if (product.imageUrls.length) {
-                        <img class="rounded w-full" [src]="product.imageUrls[0]" [alt]="product.name"
-                          style="height: 240px; object-fit: cover" />
+                        <img class="rounded w-full h-full object-cover" [src]="product.imageUrls[0]" [alt]="product.name" />
                       } @else {
-                        <div class="flex items-center justify-center rounded bg-surface-100 w-full"
-                          style="height: 240px">
+                        <div class="flex items-center justify-center rounded bg-surface-100 w-full h-full">
                           <i class="pi pi-image text-6xl text-muted"></i>
                         </div>
                       }

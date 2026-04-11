@@ -42,7 +42,7 @@ export class SellerAnalyticsComponent implements OnInit {
   searchTerms: SearchTerm[] = [];
   loading = true;
 
-  chartPeriod = 'month';
+  chartPeriod = 'year';
   orderChartPeriod = 'year';
   periodOptions = [
     { label: '7 Days', value: 'week' },

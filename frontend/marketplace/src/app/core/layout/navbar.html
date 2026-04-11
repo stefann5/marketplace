@@ -27,7 +27,7 @@
         }
         @if (userRole === 'BUYER') {
           <p-button icon="pi pi-list" label="Orders" [text]="true" routerLink="/orders" />
-          <p-button routerLink="/cart" [text]="true" [rounded]="true" styleClass="relative !overflow-visible mr-2">
+          <p-button (onClick)="goToCart()" [text]="true" [rounded]="true" styleClass="relative !overflow-visible mr-2">
             <i class="pi pi-shopping-cart text-xl"></i>
             @if (cartItemCount > 0) {
               <p-badge [value]="'' + cartItemCount" severity="danger"

@@ -107,7 +107,9 @@ export class SellerShopComponent implements OnInit, OnDestroy {
 
   viewProduct(product: Product): void {
     if (!this.seller) return;
-    this.router.navigate(['/shop', this.seller.slug, 'product', product.id]);
+    this.router.navigate(['/shop', this.seller.slug, 'product', product.id], {
+      queryParams: { returnUrl: this.router.url }
+    });
   }
 
   getCategoryName(categoryId: number | null): string {

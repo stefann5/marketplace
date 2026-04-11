@@ -21,3 +21,12 @@
 .p-dataview-paginator-bottom {
   border: 0px !important;
 }
+
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
