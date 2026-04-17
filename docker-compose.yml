@@ -146,6 +146,7 @@ services:
       - order-service
       - seller-service
       - analytics-service
+      - chat-service
     networks:
       - internal
 
@@ -160,6 +161,16 @@ services:
     depends_on:
       - mongodb
       - rabbitmq
+    networks:
+      - internal
+
+  chat-service:
+    build: ./chat-service
+    env_file:
+      - ./chat-service/.env
+    depends_on:
+      - catalog-service
+      - mongodb
     networks:
       - internal
 
