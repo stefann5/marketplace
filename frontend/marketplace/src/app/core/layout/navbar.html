@@ -26,6 +26,7 @@
           <p-button label="Admin" icon="pi pi-shield" [text]="true" routerLink="/admin/sellers" />
         }
         @if (userRole === 'BUYER') {
+          <p-button icon="pi pi-sparkles" label="AI Chat" [text]="true" routerLink="/chat" />
           <p-button icon="pi pi-list" label="Orders" [text]="true" routerLink="/orders" />
           <p-button (onClick)="goToCart()" [text]="true" [rounded]="true" styleClass="relative !overflow-visible mr-2">
             <i class="pi pi-shopping-cart text-xl"></i>

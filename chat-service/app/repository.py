@@ -3,7 +3,6 @@ from typing import Any
 from uuid import UUID
 
 from bson import ObjectId
-from google.genai import types
 
 from app.db import database
 
@@ -82,17 +81,18 @@ async def append_messages(
     product_ids: list[UUID],
     new_title: str | None = None,
 ) -> None:
-    now = _utcnow()
-    user_entry = {"role": "user", "content": user_message, "productIds": [], "createdAt": now}
+    user_ts = _utcnow()
+    assistant_ts = _utcnow()
+    user_entry = {"role": "user", "content": user_message, "productIds": [], "createdAt": user_ts}
     assistant_entry = {
         "role": "assistant",
         "content": assistant_message,
         "productIds": [str(pid) for pid in product_ids],
-        "createdAt": now,
+        "createdAt": assistant_ts,
     }
     update: dict[str, Any] = {
         "$push": {"messages": {"$each": [user_entry, assistant_entry]}},
-        "$set": {"updatedAt": now},
+        "$set": {"updatedAt": assistant_ts},
     }
     if new_title:
         update["$set"]["title"] = new_title
@@ -101,9 +101,5 @@ async def append_messages(
     )
 
 
-def history_to_gemini_contents(messages: list[dict[str, Any]]) -> list[types.Content]:
-    contents: list[types.Content] = []
-    for m in messages:
-        role = "user" if m["role"] == "user" else "model"
-        contents.append(types.Content(role=role, parts=[types.Part(text=m["content"])]))
-    return contents
+def history_to_openai_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [{"role": m["role"], "content": m["content"]} for m in messages]

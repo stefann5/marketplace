@@ -1,11 +1,14 @@
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from openai import APIStatusError, RateLimitError
 
 from app import repository
 from app.auth import require_user
-from app.catalog_client import catalog_client
-from app.gemini_agent import gemini_agent
+from app.config import settings
+from app.llm_agent import llm_agent
+from app.reranker import reranker
 from app.models import (
     ChatSessionDetail,
     ChatSessionSummary,
@@ -13,6 +16,8 @@ from app.models import (
     SendMessageRequest,
     SendMessageResponse,
 )
+
+log = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/chat")
 
@@ -52,21 +57,46 @@ async def send_message(
     if session is None:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    history = repository.history_to_gemini_contents(session["messages"])
+    history = repository.history_to_openai_messages(session["messages"])
 
     try:
-        message, product_ids, seen = await gemini_agent.chat(history, body.message)
+        message, product_ids, seen = await llm_agent.chat(history, body.message)
+    except RateLimitError as ex:
+        log.warning("LLM 429: %s", ex)
+        raise HTTPException(
+            status_code=429,
+            detail="LLM rate limit reached. Please wait a moment and try again.",
+        ) from ex
+    except APIStatusError as ex:
+        log.warning("LLM error %s: %s", ex.status_code, ex)
+        raise HTTPException(status_code=502, detail=f"LLM error: {ex.message}") from ex
     except RuntimeError as ex:
         raise HTTPException(status_code=503, detail=str(ex)) from ex
 
-    products = [_to_summary(seen[pid]) for pid in product_ids if pid in seen]
+    ordered_raw = [seen[pid] for pid in product_ids if pid in seen]
+    ordered_raw = await _rerank(body.message, ordered_raw)
+    ordered_raw = ordered_raw[: settings.reranker_top_k]
+    final_ids = [UUID(p["id"]) for p in ordered_raw]
+    products = [_to_summary(p) for p in ordered_raw]
 
     new_title = body.message[:60] if not session["messages"] else None
     await repository.append_messages(
-        session_id, user_id, body.message, message, product_ids, new_title=new_title
+        session_id, user_id, body.message, message, final_ids, new_title=new_title
     )
 
     return SendMessageResponse(sessionId=session_id, message=message, products=products)
+
+
+async def _rerank(query: str, products: list[dict]) -> list[dict]:
+    if not settings.reranker_enabled or len(products) <= 1:
+        return products
+    try:
+        scores = await reranker.score(query, products)
+    except Exception as ex:
+        log.warning("Reranker failed, falling back to LLM order: %s", ex)
+        return products
+    paired = sorted(zip(scores, products), key=lambda x: x[0], reverse=True)
+    return [p for _, p in paired]
 
 
 def _to_summary(p: dict) -> ProductSummary:
