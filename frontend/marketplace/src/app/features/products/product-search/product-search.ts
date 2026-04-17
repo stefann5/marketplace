@@ -60,7 +60,6 @@ export class ProductSearchComponent implements OnInit, OnDestroy {
   selectedCategoryNode: TreeNode | null = null;
   priceRange: [number, number] = [0, 10000];
   minRating: number | null = null;
-  tenantId: string | undefined;
 
   sortOptions: SortOption[] = [
     { label: 'Rating (High to Low)', value: 'rating_desc' },
@@ -127,8 +126,6 @@ export class ProductSearchComponent implements OnInit, OnDestroy {
 
   private applyParams(params: any): void {
     this.searchName = params['name'] ?? '';
-    this.tenantId = params['tenantId'] ?? undefined;
-    if (this.forcedTenantId) this.tenantId = this.forcedTenantId;
 
     const catId = params['categoryId'] ? Number(params['categoryId']) : null;
     this.selectedCategoryNode = catId !== null && Number.isFinite(catId)
@@ -171,8 +168,7 @@ export class ProductSearchComponent implements OnInit, OnDestroy {
       sort: this.selectedSort.value !== this.sortOptions[0].value ? this.selectedSort.value : null,
       page: this.page > 0 ? this.page : null,
       size: this.rows !== 20 ? this.rows : null,
-      layout: this.layout !== 'grid' ? this.layout : null,
-      tenantId: this.forcedTenantId ? null : (this.tenantId ?? null)
+      layout: this.layout !== 'grid' ? this.layout : null
     };
     this.suppressSync = true;
     this.router.navigate([], {
@@ -191,7 +187,7 @@ export class ProductSearchComponent implements OnInit, OnDestroy {
       minPrice: this.priceRange[0] > 0 ? this.priceRange[0] : undefined,
       maxPrice: this.priceRange[1] < 10000 ? this.priceRange[1] : undefined,
       minRating: this.minRating ?? undefined,
-      tenantId: this.tenantId,
+      tenantId: this.forcedTenantId,
       sortBy,
       sortDirection,
       page: this.page,

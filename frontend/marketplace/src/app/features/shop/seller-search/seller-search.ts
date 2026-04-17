@@ -28,12 +28,6 @@ export class SellerSearchComponent implements OnInit {
     }
 
     this.slug = slug;
-    const routeTenantId = this.route.snapshot.queryParamMap.get('tenantId');
-    if (routeTenantId) {
-      this.tenantId = routeTenantId;
-      return;
-    }
-
     this.sellerService.getBySlug(slug).subscribe({
       next: (seller) => {
         this.tenantId = seller.tenantId;
