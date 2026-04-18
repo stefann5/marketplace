@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -22,6 +22,8 @@ class ChatMessage(BaseModel):
     role: Literal["user", "assistant"]
     content: str
     productIds: list[UUID] = []
+    productNames: list[str] = []
+    searchParams: list[dict[str, Any]] = []
     createdAt: datetime
 
 

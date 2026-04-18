@@ -168,8 +168,6 @@ services:
     build: ./chat-service
     env_file:
       - ./chat-service/.env
-    volumes:
-      - hf-cache:/hf-cache
     depends_on:
       - catalog-service
       - mongodb
@@ -180,7 +178,6 @@ volumes:
   minio-data:
   rabbitmq-data:
   mongodb-data:
-  hf-cache:
 
 networks:
   internal:

@@ -79,15 +79,26 @@ async def append_messages(
     user_message: str,
     assistant_message: str,
     product_ids: list[UUID],
+    product_names: list[str],
+    search_params: list[dict[str, Any]],
     new_title: str | None = None,
 ) -> None:
     user_ts = _utcnow()
     assistant_ts = _utcnow()
-    user_entry = {"role": "user", "content": user_message, "productIds": [], "createdAt": user_ts}
+    user_entry = {
+        "role": "user",
+        "content": user_message,
+        "productIds": [],
+        "productNames": [],
+        "searchParams": [],
+        "createdAt": user_ts,
+    }
     assistant_entry = {
         "role": "assistant",
         "content": assistant_message,
         "productIds": [str(pid) for pid in product_ids],
+        "productNames": list(product_names),
+        "searchParams": list(search_params),
         "createdAt": assistant_ts,
     }
     update: dict[str, Any] = {
@@ -101,5 +112,26 @@ async def append_messages(
     )
 
 
+def _format_search(params: dict[str, Any]) -> str:
+    if not params:
+        return "(no filters)"
+    return " ".join(f"{k}={v}" for k, v in params.items())
+
+
 def history_to_openai_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [{"role": m["role"], "content": m["content"]} for m in messages]
+    out: list[dict[str, Any]] = []
+    for m in messages:
+        content = m["content"]
+        if m["role"] == "assistant":
+            extras: list[str] = []
+            searches = m.get("searchParams") or []
+            if searches:
+                rendered = "; ".join(_format_search(s) for s in searches)
+                extras.append(f"[Searches you ran in this turn: {rendered}]")
+            names = m.get("productNames") or []
+            if names:
+                extras.append(f"[Products shown to user in this reply: {', '.join(names)}]")
+            if extras:
+                content = content + "\n\n" + "\n".join(extras)
+        out.append({"role": m["role"], "content": content})
+    return out

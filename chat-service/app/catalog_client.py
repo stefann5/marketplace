@@ -27,13 +27,15 @@ class CatalogClient:
         min_price: float | None = None,
         max_price: float | None = None,
         min_rating: float | None = None,
+        sort_by: str | None = None,
+        sort_direction: str | None = None,
         limit: int = 10,
     ) -> dict[str, Any]:
         params: dict[str, Any] = {
             "page": 0,
             "size": max(1, min(limit, 20)),
-            "sortBy": "rating",
-            "sortDirection": "desc",
+            "sortBy": sort_by if sort_by in {"price", "rating", "date"} else "rating",
+            "sortDirection": "asc" if sort_direction == "asc" else "desc",
         }
         if name:
             params["name"] = name

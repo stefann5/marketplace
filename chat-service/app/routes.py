@@ -8,7 +8,6 @@ from app import repository
 from app.auth import require_user
 from app.config import settings
 from app.llm_agent import llm_agent
-from app.reranker import reranker
 from app.models import (
     ChatSessionDetail,
     ChatSessionSummary,
@@ -60,7 +59,9 @@ async def send_message(
     history = repository.history_to_openai_messages(session["messages"])
 
     try:
-        message, product_ids, seen, is_fallback = await llm_agent.chat(history, body.message)
+        message, product_ids, seen, is_fallback, searches = await llm_agent.chat(
+            history, body.message
+        )
     except RateLimitError as ex:
         log.warning("LLM 429: %s", ex)
         raise HTTPException(
@@ -76,46 +77,29 @@ async def send_message(
     if is_fallback:
         new_title = body.message[:60] if not session["messages"] else None
         await repository.append_messages(
-            session_id, user_id, body.message, message, [], new_title=new_title
+            session_id, user_id, body.message, message, [], [], searches, new_title=new_title
         )
         return SendMessageResponse(sessionId=session_id, message=message, products=[])
 
     ordered_raw = [seen[pid] for pid in product_ids if pid in seen]
-    ordered_raw = await _rerank(body.message, ordered_raw)
-    ordered_raw = ordered_raw[: settings.reranker_top_k]
+    ordered_raw = ordered_raw[: settings.chat_max_products]
     final_ids = [UUID(p["id"]) for p in ordered_raw]
+    final_names = [str(p.get("name", "")) for p in ordered_raw]
     products = [_to_summary(p) for p in ordered_raw]
 
     new_title = body.message[:60] if not session["messages"] else None
     await repository.append_messages(
-        session_id, user_id, body.message, message, final_ids, new_title=new_title
+        session_id,
+        user_id,
+        body.message,
+        message,
+        final_ids,
+        final_names,
+        searches,
+        new_title=new_title,
     )
 
     return SendMessageResponse(sessionId=session_id, message=message, products=products)
-
-
-async def _rerank(query: str, products: list[dict]) -> list[dict]:
-    if not settings.reranker_enabled or not products:
-        return products
-    try:
-        scores = await reranker.score(query, products)
-    except Exception as ex:
-        log.warning("Reranker failed, falling back to LLM order: %s", ex)
-        return products
-    paired = sorted(zip(scores, products), key=lambda x: x[0], reverse=True)
-    top_score = paired[0][0] if paired else 0.0
-    cutoff = top_score * settings.reranker_score_ratio
-    log.info(
-        "Reranker scores for %r (top %.4f, cutoff %.4f):\n%s",
-        query,
-        top_score,
-        cutoff,
-        "\n".join(
-            f"  {score:.4f}  {'KEEP' if score >= cutoff else 'DROP'}  {p.get('name')}"
-            for score, p in paired
-        ),
-    )
-    return [p for score, p in paired if score >= cutoff]
 
 
 def _to_summary(p: dict) -> ProductSummary:

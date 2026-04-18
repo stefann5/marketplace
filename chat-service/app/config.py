@@ -12,10 +12,8 @@ class Settings(BaseSettings):
     llm_max_iterations: int = 3
     llm_temperature: float = 0.4
     category_refresh_minutes: int = 30
-    reranker_model: str = "BAAI/bge-reranker-v2-m3"
-    reranker_enabled: bool = True
-    reranker_top_k: int = 10
-    reranker_score_ratio: float = 0.3
+    chat_max_products: int = 10
+    chat_score_threshold: int = 50
 
 
 settings = Settings()
