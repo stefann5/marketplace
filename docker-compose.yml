@@ -139,13 +139,14 @@ services:
       ORDER_SERVICE_URL: http://order-service:8083
       SELLER_SERVICE_URL: http://seller-service:8084
       ANALYTICS_SERVICE_URL: http://analytics-service:8085
-      AI_CHAT_SERVICE_URL: http://ai-chat-service:8086
+      CHAT_SERVICE_URL: http://chat-service:8086
     depends_on:
       - auth-service
       - catalog-service
       - order-service
       - seller-service
       - analytics-service
+      - chat-service
     networks:
       - internal
 
@@ -160,6 +161,16 @@ services:
     depends_on:
       - mongodb
       - rabbitmq
+    networks:
+      - internal
+
+  chat-service:
+    build: ./chat-service
+    env_file:
+      - ./chat-service/.env
+    depends_on:
+      - catalog-service
+      - mongodb
     networks:
       - internal
 

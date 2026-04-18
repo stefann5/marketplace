@@ -27,8 +27,9 @@ export class AnalyticsService {
     return this.http.get<RevenueChart>(`${this.apiUrl}/revenue/chart`, { params });
   }
 
-  getOrderSummary(): Observable<OrderSummary> {
-    return this.http.get<OrderSummary>(`${this.apiUrl}/orders`);
+  getOrderSummary(period: string = 'month'): Observable<OrderSummary> {
+    const params = new HttpParams().set('period', period);
+    return this.http.get<OrderSummary>(`${this.apiUrl}/orders`, { params });
   }
 
   getTopProducts(sortBy: string = 'revenue', limit: number = 10): Observable<TopProduct[]> {

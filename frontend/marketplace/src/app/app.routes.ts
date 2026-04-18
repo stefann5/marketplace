@@ -54,6 +54,21 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'chat',
+    loadComponent: () => import('./core/layout/buyer-layout').then(m => m.BuyerLayoutComponent),
+    canActivate: [authGuard, buyerGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/chat/chat').then(m => m.ChatComponent)
+      },
+      {
+        path: ':sessionId',
+        loadComponent: () => import('./features/chat/chat').then(m => m.ChatComponent)
+      }
+    ]
+  },
+  {
     path: 'onboarding',
     loadComponent: () => import('./features/onboarding/seller-onboarding').then(m => m.SellerOnboardingComponent)
   },

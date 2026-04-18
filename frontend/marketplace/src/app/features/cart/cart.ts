@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -15,7 +15,7 @@ import { Product } from '../../core/models/product.model';
 @Component({
   selector: 'app-cart',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ButtonModule, InputNumberModule, MessageModule],
+  imports: [CommonModule, FormsModule, ButtonModule, InputNumberModule, MessageModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './cart.html'
 })
@@ -25,17 +25,28 @@ export class CartComponent implements OnInit {
   loading = false;
   checkoutLoading = false;
   errorMessage = '';
+  returnUrl: string | null = null;
 
   constructor(
     private cartService: CartService,
     private orderService: OrderService,
     private productService: ProductService,
+    private route: ActivatedRoute,
     private router: Router,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
     this.loadCart();
+  }
+
+  continueShopping(): void {
+    if (this.returnUrl) {
+      this.router.navigateByUrl(this.returnUrl);
+    } else {
+      this.router.navigate(['/']);
+    }
   }
 
   loadCart(): void {

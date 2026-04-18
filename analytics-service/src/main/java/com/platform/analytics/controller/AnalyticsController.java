@@ -30,8 +30,9 @@ public class AnalyticsController {
 
     @GetMapping("/orders")
     public ResponseEntity<OrderSummaryResponse> getOrders(
-            @RequestHeader("X-Tenant-Id") String tenantId) {
-        return ResponseEntity.ok(analyticsService.getOrderSummary(tenantId));
+            @RequestHeader("X-Tenant-Id") String tenantId,
+            @RequestParam(defaultValue = "month") String period) {
+        return ResponseEntity.ok(analyticsService.getOrderSummary(tenantId, period));
     }
 
     @GetMapping("/products/top")

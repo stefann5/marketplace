@@ -1,7 +1,8 @@
 import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
 import { CommonModule, CurrencyPipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { ChartModule } from 'primeng/chart';
 import { TableModule } from 'primeng/table';
 import { CardModule } from 'primeng/card';
@@ -9,6 +10,7 @@ import { SelectButtonModule } from 'primeng/selectbutton';
 import { TagModule } from 'primeng/tag';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AnalyticsService } from '../../../core/services/analytics.service';
+import { ProductService } from '../../../core/services/product.service';
 import {
   RevenueSummary,
   OrderSummary,
@@ -40,11 +42,13 @@ export class SellerAnalyticsComponent implements OnInit {
   searchTerms: SearchTerm[] = [];
   loading = true;
 
-  chartPeriod = 'month';
+  chartPeriod = 'year';
+  orderChartPeriod = 'year';
   periodOptions = [
     { label: '7 Days', value: 'week' },
     { label: '30 Days', value: 'month' },
-    { label: '12 Months', value: 'year' }
+    { label: '12 Months', value: 'year' },
+    { label: 'All', value: 'all' }
   ];
 
   productSortBy = 'revenue';
@@ -55,6 +59,7 @@ export class SellerAnalyticsComponent implements OnInit {
 
   constructor(
     private analyticsService: AnalyticsService,
+    private productService: ProductService,
     private cdr: ChangeDetectorRef
   ) {
     this.revenueChartOptions = {
@@ -75,7 +80,7 @@ export class SellerAnalyticsComponent implements OnInit {
     forkJoin({
       revenue: this.analyticsService.getRevenueSummary(),
       revenueChart: this.analyticsService.getRevenueChart(this.chartPeriod),
-      orders: this.analyticsService.getOrderSummary(),
+      orders: this.analyticsService.getOrderSummary(this.orderChartPeriod),
       topProducts: this.analyticsService.getTopProducts(this.productSortBy),
       views: this.analyticsService.getProductViews(),
       terms: this.analyticsService.getSearchTerms()
@@ -93,15 +98,8 @@ export class SellerAnalyticsComponent implements OnInit {
           }]
         };
         this.orderSummary = data.orders;
-        this.orderChartData = {
-          labels: data.orders.trendLabels,
-          datasets: [{
-            label: 'Orders',
-            data: data.orders.trendValues,
-            backgroundColor: 'var(--p-primary-400)'
-          }]
-        };
-        this.topProducts = data.topProducts;
+        this.updateOrderChartData(data.orders);
+        this.setTopProducts(data.topProducts);
         this.productViews = data.views;
         this.searchTerms = data.terms;
         this.loading = false;
@@ -111,6 +109,34 @@ export class SellerAnalyticsComponent implements OnInit {
         this.loading = false;
         this.cdr.markForCheck();
       }
+    });
+  }
+
+  private updateOrderChartData(summary: OrderSummary): void {
+    this.orderChartData = {
+      labels: summary.trendLabels,
+      datasets: [{
+        label: 'Orders',
+        data: summary.trendValues,
+        backgroundColor: 'var(--p-primary-400)'
+      }]
+    };
+  }
+
+  private setTopProducts(products: TopProduct[]): void {
+    this.topProducts = products;
+    const missing = products.filter(p => !p.productName).map(p => p.productId);
+    if (missing.length === 0) return;
+    forkJoin(missing.map(id =>
+      this.productService.getById(id).pipe(catchError(() => of(null)))
+    )).subscribe(results => {
+      results.forEach((product, idx) => {
+        if (!product) return;
+        const target = this.topProducts.find(p => p.productId === missing[idx]);
+        if (target) target.productName = product.name;
+      });
+      this.topProducts = [...this.topProducts];
+      this.cdr.markForCheck();
     });
   }
 
@@ -132,10 +158,20 @@ export class SellerAnalyticsComponent implements OnInit {
     });
   }
 
+  onOrderPeriodChange(): void {
+    this.analyticsService.getOrderSummary(this.orderChartPeriod).subscribe({
+      next: summary => {
+        this.orderSummary = summary;
+        this.updateOrderChartData(summary);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
   onProductSortChange(): void {
     this.analyticsService.getTopProducts(this.productSortBy).subscribe({
       next: products => {
-        this.topProducts = products;
+        this.setTopProducts(products);
         this.cdr.markForCheck();
       }
     });

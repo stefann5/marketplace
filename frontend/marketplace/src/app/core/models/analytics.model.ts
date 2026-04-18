@@ -22,6 +22,7 @@ export interface OrderSummary {
 
 export interface TopProduct {
   productId: string;
+  productName: string | null;
   unitsSold: number;
   revenue: number;
 }

@@ -21,6 +21,7 @@ import { ThemeService } from '../../../core/services/theme.service';
 import { Product } from '../../../core/models/product.model';
 import { Cart } from '../../../core/models/cart.model';
 import { Review, ReviewRequest } from '../../../core/models/review.model';
+import { SellerProfile } from '../../../core/models/seller.model';
 
 @Component({
   selector: 'app-product-detail',
@@ -38,9 +39,11 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   notFound = false;
   sellerSlug: string | null = null;
   sellerTenantId: string | null = null;
+  productSeller: SellerProfile | null = null;
   selectedImageIndex = 0;
   addingToCart = false;
   cart: Cart | null = null;
+  returnUrl: string | null = null;
   private cartSub?: Subscription;
 
   reviews: Review[] = [];
@@ -74,10 +77,11 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       this.cdr.markForCheck();
     });
     this.sellerSlug = this.route.parent?.snapshot.paramMap.get('slug') ?? null;
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
 
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
-      this.router.navigate(['/products']);
+      this.router.navigate(['/products/search']);
       return;
     }
 
@@ -112,6 +116,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
         this.product = p;
         this.loadReviews();
         this.loadMyReview();
+        this.loadSellerForProduct(p.tenantId);
         this.cdr.markForCheck();
       },
       error: () => {
@@ -119,10 +124,23 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
           this.notFound = true;
           this.cdr.markForCheck();
         } else {
-          this.router.navigate(['/products']);
+          this.router.navigate(['/products/search']);
         }
       }
     });
+  }
+
+  private loadSellerForProduct(tenantId: string): void {
+    this.sellerService.getTenantMap().subscribe(map => {
+      this.productSeller = map.get(tenantId) ?? null;
+      this.cdr.markForCheck();
+    });
+  }
+
+  visitSellerShop(): void {
+    if (this.productSeller) {
+      this.router.navigate(['/shop', this.productSeller.slug]);
+    }
   }
 
   loadReviews(): void {
@@ -209,11 +227,15 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   }
 
   goBack(): void {
+    if (this.returnUrl) {
+      this.router.navigateByUrl(this.returnUrl);
+      return;
+    }
     if (this.sellerSlug) {
       this.router.navigate(['/shop', this.sellerSlug, 'search'], { queryParams: this.route.snapshot.queryParams });
       return;
     }
-    this.router.navigate(['/products']);
+    this.router.navigate(['/products/search']);
   }
 
   getStockSeverity(stock: number): 'success' | 'warn' | 'danger' {

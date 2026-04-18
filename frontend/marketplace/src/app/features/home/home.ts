@@ -24,6 +24,8 @@ interface CategoryRow {
   products: Product[];
 }
 
+const HOME_PRODUCTS_PER_CATEGORY = 7;
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -35,10 +37,12 @@ export class HomeComponent implements OnInit, OnDestroy {
   categoryRows: CategoryRow[] = [];
   loading = true;
   cart: Cart | null = null;
+  isSeller = false;
 
   sellers: SellerProfile[] = [];
   sellersLoading = true;
   logoErrors = new Set<string>();
+  sellerMap = new Map<string, SellerProfile>();
 
   private cartSub?: Subscription;
 
@@ -55,6 +59,7 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const role = this.authService.getUserRole();
+    this.isSeller = role === 'SELLER';
     if (role === 'SELLER') {
       this.router.navigate(['/dashboard/products']);
       return;
@@ -66,6 +71,11 @@ export class HomeComponent implements OnInit, OnDestroy {
 
     this.cartSub = this.cartService.cartState$.subscribe(cart => {
       this.cart = cart;
+      this.cdr.markForCheck();
+    });
+
+    this.sellerService.getTenantMap().subscribe(map => {
+      this.sellerMap = map;
       this.cdr.markForCheck();
     });
 
@@ -94,7 +104,7 @@ export class HomeComponent implements OnInit, OnDestroy {
           sortBy: 'rating',
           sortDirection: 'desc',
           page: 0,
-          size: 6
+          size: HOME_PRODUCTS_PER_CATEGORY
         })
       );
 
@@ -130,6 +140,18 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.router.navigate(['/shop', seller.slug]);
   }
 
+  visitSellerShopByTenant(event: Event, tenantId: string): void {
+    event.stopPropagation();
+    const seller = this.sellerMap.get(tenantId);
+    if (seller) {
+      this.router.navigate(['/shop', seller.slug]);
+    }
+  }
+
+  getSellerName(tenantId: string): string {
+    return this.sellerMap.get(tenantId)?.companyName ?? '';
+  }
+
   onLogoError(sellerId: string): void {
     this.logoErrors.add(sellerId);
   }
@@ -139,11 +161,18 @@ export class HomeComponent implements OnInit, OnDestroy {
   }
 
   viewProduct(id: string): void {
-    this.router.navigate(['/products', id]);
+    this.router.navigate(['/products', id], {
+      queryParams: { returnUrl: this.router.url }
+    });
   }
 
   seeMore(categoryId: number): void {
     this.router.navigate(['/products/search'], { queryParams: { categoryId } });
+  }
+
+  scrollRow(container: HTMLElement, direction: 1 | -1): void {
+    const amount = Math.max(container.clientWidth * 0.8, 200);
+    container.scrollBy({ left: amount * direction, behavior: 'smooth' });
   }
 
   getStockSeverity(stock: number): 'success' | 'warn' | 'danger' {

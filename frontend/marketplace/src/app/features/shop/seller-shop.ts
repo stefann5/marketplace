@@ -32,6 +32,7 @@ export class SellerShopComponent implements OnInit, OnDestroy {
   loading = true;
   cart: Cart | null = null;
   categoryMap = new Map<number, string>();
+  isSeller = false;
   private cartSub?: Subscription;
 
   constructor(
@@ -46,6 +47,7 @@ export class SellerShopComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.isSeller = this.authService.getUserRole() === 'SELLER';
     this.categoryService.getCategoryMap().subscribe(map => {
       this.categoryMap = map;
       this.cdr.detectChanges();
@@ -105,7 +107,9 @@ export class SellerShopComponent implements OnInit, OnDestroy {
 
   viewProduct(product: Product): void {
     if (!this.seller) return;
-    this.router.navigate(['/shop', this.seller.slug, 'product', product.id]);
+    this.router.navigate(['/shop', this.seller.slug, 'product', product.id], {
+      queryParams: { returnUrl: this.router.url }
+    });
   }
 
   getCategoryName(categoryId: number | null): string {

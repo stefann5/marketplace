@@ -1,14 +1,38 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, map, shareReplay } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { SellerProfile, SellerTheme, ThemeRequest, UpdateProfileRequest } from '../models/seller.model';
 
 @Injectable({ providedIn: 'root' })
 export class SellerService {
   private readonly apiUrl = `${environment.apiUrl}/api/sellers`;
+  private activeSellersCache$?: Observable<SellerProfile[]>;
+  private tenantMapCache$?: Observable<Map<string, SellerProfile>>;
+  private slugCache = new Map<string, Observable<SellerProfile>>();
 
   constructor(private http: HttpClient) {}
+
+  getAllCached(): Observable<SellerProfile[]> {
+    if (!this.activeSellersCache$) {
+      this.activeSellersCache$ = this.http.get<SellerProfile[]>(this.apiUrl).pipe(shareReplay(1));
+    }
+    return this.activeSellersCache$;
+  }
+
+  getTenantMap(): Observable<Map<string, SellerProfile>> {
+    if (!this.tenantMapCache$) {
+      this.tenantMapCache$ = this.getAllCached().pipe(
+        map(sellers => {
+          const m = new Map<string, SellerProfile>();
+          sellers.forEach(s => m.set(s.tenantId, s));
+          return m;
+        }),
+        shareReplay(1)
+      );
+    }
+    return this.tenantMapCache$;
+  }
 
   register(data: FormData): Observable<SellerProfile> {
     return this.http.post<SellerProfile>(`${this.apiUrl}/register`, data);
@@ -37,7 +61,12 @@ export class SellerService {
   }
 
   getBySlug(slug: string): Observable<SellerProfile> {
-    return this.http.get<SellerProfile>(`${this.apiUrl}/${slug}`);
+    let cached = this.slugCache.get(slug);
+    if (!cached) {
+      cached = this.http.get<SellerProfile>(`${this.apiUrl}/${slug}`).pipe(shareReplay(1));
+      this.slugCache.set(slug, cached);
+    }
+    return cached;
   }
 
   getTheme(): Observable<SellerTheme> {

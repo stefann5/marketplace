@@ -4,41 +4,37 @@
       <i class="pi pi-exclamation-triangle text-5xl text-orange-500 mb-4"></i>
       <h2 class="text-2xl font-bold m-0 mb-2">Product Not Found</h2>
       <p class="text-muted mb-6">This product does not belong to the selected seller or is no longer available.</p>
-      <!-- @if (sellerSlug) {
-        <p-button label="Back to Seller Shop" (onClick)="goBack()" />
-      } @else {
-        <p-button label="Back to Products" (onClick)="goBack()" />
-      } -->
+      <p-button [label]="sellerSlug ? 'Back to Seller Shop' : 'Back to Products'" (onClick)="goBack()" />
     </div>
   </div>
 } @else if (product) {
   <div class="bg-ground min-h-screen p-4">
     <div class="max-w-[60rem] mx-auto">
       <p-toast />
-      <!-- <p-button icon="pi pi-arrow-left" label="Back to Products" [text]="true" (onClick)="goBack()" class="mb-4" /> -->
+      <p-button icon="pi pi-arrow-left" label="Back" [text]="true" (onClick)="goBack()" styleClass="mb-4" />
 
       <div class="bg-surface-0 rounded-lg p-5">
         <div class="grid grid-cols-12 gap-6">
           <div class="col-span-12 md:col-span-5">
             @if (product.imageUrls.length) {
               <div class="flex flex-col gap-3">
-                <div class="flex justify-center items-center bg-surface-50 rounded-lg p-4" style="min-height: 300px">
-                  <img [src]="product.imageUrls[selectedImageIndex]" [alt]="product.name" class="rounded max-w-full max-h-[20rem] object-contain" style="width: 480px; height: 400px; object-fit: cover" />
+                <div class="flex justify-center items-center bg-surface-50 rounded-lg p-4 aspect-square">
+                  <img [src]="product.imageUrls[selectedImageIndex]" [alt]="product.name" class="rounded w-full h-full object-cover" />
                 </div>
                 @if (product.imageUrls.length > 1) {
                   <div class="flex gap-2 overflow-x-auto">
                     @for (url of product.imageUrls; track url; let i = $index) {
                       <img [src]="url" [alt]="product.name" (click)="selectedImageIndex = i"
-                           class="rounded cursor-pointer border-2 transition-all duration-200"
+                           class="rounded cursor-pointer border-2 transition-all duration-200 object-cover"
                            [class.border-primary]="i === selectedImageIndex"
                            [class.border-transparent]="i !== selectedImageIndex"
-                           style="width: 64px; height: 64px; object-fit: cover" />
+                           style="width: 64px; height: 64px" />
                     }
                   </div>
                 }
               </div>
             } @else {
-              <div class="flex justify-center items-center bg-surface-50 rounded-lg p-4" style="min-height: 300px">
+              <div class="flex justify-center items-center bg-surface-50 rounded-lg p-4 aspect-square">
                 <i class="pi pi-image text-8xl text-muted"></i>
               </div>
             }
@@ -57,6 +53,15 @@
                 <span class="text-muted">·</span>
                 <span class="text-muted">{{ product.purchaseCount }} sold</span>
               </div>
+
+              @if (productSeller) {
+                <div class="flex items-center gap-2 text-sm">
+                  <i class="pi pi-shop text-muted"></i>
+                  <span class="text-muted">Sold by</span>
+                  <a class="font-medium text-primary hover:underline cursor-pointer"
+                    (click)="visitSellerShop()">{{ productSeller.companyName }}</a>
+                </div>
+              }
 
               <span class="text-4xl font-bold text-primary">{{ product.price | currency:'USD' }}</span>
 

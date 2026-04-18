@@ -8,6 +8,9 @@ import com.platform.order.event.OrderFulfilledEvent;
 import com.platform.order.exception.OrderException;
 import com.platform.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +34,12 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
+    public Page<OrderResponse> getBuyerOrdersPaged(UUID userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return orderRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable).map(OrderResponse::from);
+    }
+
+    @Transactional(readOnly = true)
     public List<OrderResponse> getSellerOrders(UUID tenantId, OrderStatus status) {
         List<Order> orders;
         if (status != null) {
@@ -39,6 +48,15 @@ public class OrderService {
             orders = orderRepository.findByTenantIdOrderByCreatedAtDesc(tenantId);
         }
         return orders.stream().map(OrderResponse::from).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<OrderResponse> getSellerOrdersPaged(UUID tenantId, OrderStatus status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Order> orders = status != null
+                ? orderRepository.findByTenantIdAndStatusOrderByCreatedAtDesc(tenantId, status, pageable)
+                : orderRepository.findByTenantIdOrderByCreatedAtDesc(tenantId, pageable);
+        return orders.map(OrderResponse::from);
     }
 
     @Transactional

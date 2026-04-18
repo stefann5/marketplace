@@ -26,7 +26,6 @@ import { InputIconModule } from 'primeng/inputicon';
   templateUrl: './navbar.html'
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-  @Input() tenantId: string | undefined;
   @Input() sellerSlug: string | undefined;
   @Input() brandLabel: string | undefined;
 
@@ -83,6 +82,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.router.navigate(['/login']);
   }
 
+  goToCart(): void {
+    const currentUrl = this.router.url;
+    const queryParams = currentUrl.startsWith('/cart') ? {} : { returnUrl: currentUrl };
+    this.router.navigate(['/cart'], { queryParams });
+  }
+
   logout(): void {
     this.cartService.clearCount();
     this.loggedIn = false;
@@ -103,7 +108,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     if (this.searchQuery.trim()) {
       const sellerSlug = this.resolveSellerSlug();
       const queryParams: any = { name: this.searchQuery.trim() };
-      if (this.tenantId) queryParams.tenantId = this.tenantId;
       if (sellerSlug) {
         this.router.navigate(['/shop', sellerSlug, 'search'], { queryParams });
       } else {
@@ -116,7 +120,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.drawerVisible = false;
     const sellerSlug = this.resolveSellerSlug();
     const queryParams: any = { categoryId: event.node.data };
-    if (this.tenantId) queryParams.tenantId = this.tenantId;
     if (sellerSlug) {
       this.router.navigate(['/shop', sellerSlug, 'search'], { queryParams });
     } else {
