@@ -1,8 +1,10 @@
 export interface ChatProductSummary {
   id: string;
+  tenantId: string;
   name: string;
   description: string | null;
   price: number;
+  stock: number;
   categoryId: number | null;
   imageUrls: string[];
   averageRating: number;

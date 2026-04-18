@@ -219,11 +219,11 @@ export class ChatComponent implements OnInit, OnDestroy {
   private toProduct(summary: import('../../core/models/chat.model').ChatProductSummary): Product {
     return {
       id: summary.id,
-      tenantId: '',
+      tenantId: summary.tenantId,
       name: summary.name,
       description: summary.description ?? '',
       price: summary.price,
-      stock: 0,
+      stock: summary.stock,
       categoryId: summary.categoryId,
       imageUrls: summary.imageUrls,
       averageRating: summary.averageRating,

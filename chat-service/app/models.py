@@ -7,9 +7,11 @@ from pydantic import BaseModel, Field
 
 class ProductSummary(BaseModel):
     id: UUID
+    tenantId: str
     name: str
     description: str | None = None
     price: float
+    stock: int = 0
     categoryId: int | None = None
     imageUrls: list[str] = []
     averageRating: float = 0.0

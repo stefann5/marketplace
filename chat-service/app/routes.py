@@ -60,7 +60,7 @@ async def send_message(
     history = repository.history_to_openai_messages(session["messages"])
 
     try:
-        message, product_ids, seen = await llm_agent.chat(history, body.message)
+        message, product_ids, seen, is_fallback = await llm_agent.chat(history, body.message)
     except RateLimitError as ex:
         log.warning("LLM 429: %s", ex)
         raise HTTPException(
@@ -72,6 +72,13 @@ async def send_message(
         raise HTTPException(status_code=502, detail=f"LLM error: {ex.message}") from ex
     except RuntimeError as ex:
         raise HTTPException(status_code=503, detail=str(ex)) from ex
+
+    if is_fallback:
+        new_title = body.message[:60] if not session["messages"] else None
+        await repository.append_messages(
+            session_id, user_id, body.message, message, [], new_title=new_title
+        )
+        return SendMessageResponse(sessionId=session_id, message=message, products=[])
 
     ordered_raw = [seen[pid] for pid in product_ids if pid in seen]
     ordered_raw = await _rerank(body.message, ordered_raw)
@@ -88,7 +95,7 @@ async def send_message(
 
 
 async def _rerank(query: str, products: list[dict]) -> list[dict]:
-    if not settings.reranker_enabled or len(products) <= 1:
+    if not settings.reranker_enabled or not products:
         return products
     try:
         scores = await reranker.score(query, products)
@@ -96,15 +103,29 @@ async def _rerank(query: str, products: list[dict]) -> list[dict]:
         log.warning("Reranker failed, falling back to LLM order: %s", ex)
         return products
     paired = sorted(zip(scores, products), key=lambda x: x[0], reverse=True)
-    return [p for _, p in paired]
+    top_score = paired[0][0] if paired else 0.0
+    cutoff = top_score * settings.reranker_score_ratio
+    log.info(
+        "Reranker scores for %r (top %.4f, cutoff %.4f):\n%s",
+        query,
+        top_score,
+        cutoff,
+        "\n".join(
+            f"  {score:.4f}  {'KEEP' if score >= cutoff else 'DROP'}  {p.get('name')}"
+            for score, p in paired
+        ),
+    )
+    return [p for score, p in paired if score >= cutoff]
 
 
 def _to_summary(p: dict) -> ProductSummary:
     return ProductSummary(
         id=UUID(p["id"]),
+        tenantId=str(p.get("tenantId", "")),
         name=p["name"],
         description=p.get("description"),
         price=float(p["price"]),
+        stock=int(p.get("stock", 0)),
         categoryId=p.get("categoryId"),
         imageUrls=p.get("imageUrls", []),
         averageRating=float(p.get("averageRating", 0)),

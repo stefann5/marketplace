@@ -1,5 +1,6 @@
 import json
 import logging
+import random
 from typing import Any
 from uuid import UUID
 
@@ -10,6 +11,15 @@ from app.category_cache import category_cache
 from app.config import settings
 
 log = logging.getLogger(__name__)
+
+
+_FALLBACK_RESPONSES = [
+    "I'm having trouble narrowing down what you're looking for. Could you rephrase your request or add a bit more detail?",
+    "I couldn't quite pin down good matches for that. Try rewording your request or being more specific about what you want.",
+    "Hmm, that search didn't go anywhere useful. Mind trying different wording or sharing a little more context?",
+    "I wasn't able to come up with solid recommendations this time. Could you give it another go with different phrasing?",
+    "I got stuck trying to figure out the right products for that. Try rephrasing — a keyword or two about what matters to you helps a lot.",
+]
 
 
 _SEARCH_PRODUCTS_TOOL = {
@@ -25,17 +35,17 @@ _SEARCH_PRODUCTS_TOOL = {
             "type": "object",
             "properties": {
                 "name": {
-                    "type": "string",
+                    "type": ["string", "null"],
                     "description": "Free-text substring match on product name. Use sparingly; prefer category filtering.",
                 },
                 "categoryId": {
-                    "type": "integer",
+                    "type": ["integer", "null"],
                     "description": "Category ID. Filtering is recursive — passing a parent ID searches all children.",
                 },
-                "minPrice": {"type": "number", "description": "Min price in EUR (optional)."},
-                "maxPrice": {"type": "number", "description": "Max price in EUR (optional)."},
-                "minRating": {"type": "number", "description": "Min average rating 0-5 (optional)."},
-                "limit": {"type": "integer", "description": "Max results, 1-20. Default 10."},
+                "minPrice": {"type": ["number", "null"], "description": "Min price in EUR (optional)."},
+                "maxPrice": {"type": ["number", "null"], "description": "Max price in EUR (optional)."},
+                "minRating": {"type": ["number", "null"], "description": "Min average rating 0-5 (optional)."},
+                "limit": {"type": ["integer", "null"], "description": "Max results, 1-20. Default 10."},
             },
         },
     },
@@ -56,8 +66,14 @@ How to search:
   `search_products` calls — one per category — within the same response.
 - ONLY use categoryId values from the CATEGORIES list below. Prefer narrower (deeper) categories.
   Passing a parent category searches all its children recursively.
+- IN ADDITION to category searches, always issue ONE extra `search_products` call using only
+  the `name` parameter — no categoryId, no price/rating filters. Use the single most obvious
+  keyword from the user's request (e.g. "hdmi" for "I need an hdmi cable", "shirt" for
+  "looking for a formal shirt"). Prefer 1 keyword; use at most 3 words only if no single
+  word captures the intent. Skip this call only if the user's request is abstract with no
+  concrete product word (e.g. "I have a wedding coming up").
 - Use price/rating filters only if the user mentioned them.
-- Stop after at most 2 rounds of tool calls.
+- Stop after at most {settings.llm_max_iterations} rounds of tool calls.
 
 How to reply:
 - After tool results come back, write a short, friendly reply (1-3 sentences) in the user's
@@ -79,17 +95,17 @@ class LlmAgent:
     @property
     def client(self) -> AsyncOpenAI:
         if self._client is None:
-            if not settings.groq_api_key:
-                raise RuntimeError("GROQ_API_KEY not configured")
+            if not settings.llm_api_key:
+                raise RuntimeError("LLM_API_KEY not configured")
             self._client = AsyncOpenAI(
-                api_key=settings.groq_api_key,
+                api_key=settings.llm_api_key,
                 base_url=settings.llm_base_url,
             )
         return self._client
 
     async def chat(
         self, history: list[dict[str, Any]], user_message: str
-    ) -> tuple[str, list[UUID], dict[UUID, dict[str, Any]]]:
+    ) -> tuple[str, list[UUID], dict[UUID, dict[str, Any]], bool]:
         messages: list[dict[str, Any]] = [
             {"role": "system", "content": _build_system_prompt()},
             *history,
@@ -145,14 +161,10 @@ class LlmAgent:
                 continue
 
             text = (assistant_msg.content or "").strip() or "Here are some suggestions."
-            return text, seen_order, seen_products
+            return text, seen_order, seen_products, False
 
         log.warning("Reached max iterations without final answer")
-        return (
-            "Sorry, I couldn't finish searching. Please try rephrasing your request.",
-            seen_order,
-            seen_products,
-        )
+        return random.choice(_FALLBACK_RESPONSES), [], {}, True
 
     async def _execute_tool(
         self,
