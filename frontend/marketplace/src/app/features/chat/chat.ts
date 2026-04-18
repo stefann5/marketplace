@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
@@ -41,6 +41,8 @@ export class ChatComponent implements OnInit, OnDestroy {
   cart: Cart | null = null;
   private cartSub?: Subscription;
 
+  private routeSub?: Subscription;
+
   constructor(
     private chatService: ChatService,
     private productService: ProductService,
@@ -48,6 +50,8 @@ export class ChatComponent implements OnInit, OnDestroy {
     private confirmationService: ConfirmationService,
     private messageService: MessageService,
     private router: Router,
+    private route: ActivatedRoute,
+    private location: Location,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -58,10 +62,21 @@ export class ChatComponent implements OnInit, OnDestroy {
       this.cdr.markForCheck();
     });
     this.cartService.refreshCount();
+    this.routeSub = this.route.paramMap.subscribe(params => {
+      const sessionId = params.get('sessionId');
+      if (sessionId) {
+        this.loadSession(sessionId);
+      } else {
+        this.activeSession = null;
+        this.inputText = '';
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this.cartSub?.unsubscribe();
+    this.routeSub?.unsubscribe();
   }
 
   loadSessions(): void {
@@ -74,10 +89,17 @@ export class ChatComponent implements OnInit, OnDestroy {
   newChat(): void {
     this.activeSession = null;
     this.inputText = '';
+    this.location.replaceState('/chat');
     this.cdr.markForCheck();
   }
 
   selectSession(id: string): void {
+    if (this.activeSession?.id === id) return;
+    this.location.replaceState(`/chat/${id}`);
+    this.loadSession(id);
+  }
+
+  private loadSession(id: string): void {
     if (this.activeSession?.id === id) return;
     this.loadingSession = true;
     this.activeSession = null;
@@ -109,6 +131,7 @@ export class ChatComponent implements OnInit, OnDestroy {
           this.sessions = this.sessions.filter(s => s.id !== id);
           if (this.activeSession?.id === id) {
             this.activeSession = null;
+            this.location.replaceState('/chat');
           }
           this.cdr.markForCheck();
         });
@@ -140,6 +163,7 @@ export class ChatComponent implements OnInit, OnDestroy {
       this.cdr.markForCheck();
       this.chatService.createSession().subscribe(session => {
         session.messages = [userMessage];
+        session.title = this.deriveTitle(text);
         this.activeSession = session;
         this.sessions = [
           { id: session.id, title: session.title, createdAt: session.createdAt, updatedAt: session.updatedAt },
@@ -147,6 +171,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         ];
         this.cdr.markForCheck();
         this.scrollToBottom();
+        this.location.replaceState(`/chat/${session.id}`);
         this.dispatchMessage(session.id, text);
       });
     }
@@ -286,6 +311,11 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   trackBySessionId(_index: number, item: ChatSessionSummary): string {
     return item.id;
+  }
+
+  private deriveTitle(text: string): string {
+    const trimmed = text.trim().replace(/\s+/g, ' ');
+    return trimmed.length > 50 ? trimmed.slice(0, 50).trimEnd() + '…' : trimmed;
   }
 
   trackByMessage(index: number, _item: ChatMessage): number {
