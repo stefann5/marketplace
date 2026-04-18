@@ -134,7 +134,7 @@ When you have finished gathering tool results, you must reply with ONLY a raw JS
 Your JSON must exactly match this schema:
 {{
   "_reasoning": "<Briefly explain your filtering and scoring logic to yourself here. Note which items failed the {threshold} threshold and why.>",
-  "message": "<Friendly 1-3 sentence reply explaining to the user how the selected products fit their need. DO NOT mention IDs, prices, or product names, as the UI handles this.>",
+  "message": "<One warm, human sentence (≤30 words) that (a) REFERENCES the user's actual intent — their occasion, activity, goal, or constraint in their own words — and (b) describes what you found in GENERIC product-category terms (e.g. 'hiking boots and a daypack', 'a cookware set and a couple of appliances', 'some dress shirts and a pair of cufflinks'). NEVER mention any specific product name, brand, model number, SKU, or price — the UI renders product cards right below your message. Do NOT use bland filler like 'Here are a few options that fit what you're after' or 'These products match your needs.' — tie the phrasing to what they asked for. Examples — user says 'I'm going hiking this weekend': 'Here are some hiking boots and a daypack you can take on your trip.' User says 'help me cook at home': 'I picked out a cookware set plus a few appliances to get you started in the kitchen.' User says 'wedding outfit on a budget': 'These dress shirts and ties should work for the wedding and stay under your budget.' NEVER write anything like 'such as the Duracore DC-2412' or 'consider the Caspian CS-20'.>",
   "products":[
     {{"id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "score": 95}},
     {{"id": "9f8e7d6c-5b4a-3c2d-1e0f-9a8b7c6d5e4f", "score": 82}}
@@ -322,7 +322,6 @@ class LlmAgent:
             "products": compact,
             "totalMatches": total or len(compact),
         }
-        log.info(result)
         if category_error:
             result["error"] = category_error
         return result
