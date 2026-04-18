@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import random
@@ -247,35 +248,67 @@ class LlmAgent:
     ) -> dict[str, Any]:
         if name != "search_products":
             return {"error": f"unknown tool: {name}"}
+        query_name = args.get("name")
+        limit = int(args.get("limit") or 10)
+        # Call 3: name-only search (no category / filters). Fired first so it runs
+        # in parallel with category resolution below.
+        name_only_task = asyncio.create_task(
+            catalog_client.search_products(name=query_name, limit=limit)
+        )
         category_path = args.get("categoryPath")
         category_id = category_cache.resolve(category_path)
+        category_error: str | None = None
         if category_id is None:
-            log.warning("Unknown categoryPath: %r", category_path)
-            return {
-                "error": (
-                    f"Unknown categoryPath {category_path!r}. Use one of the exact "
-                    "values from the CATEGORIES list (leaf name or full path)."
-                ),
-                "products": [],
-                "totalMatches": 0,
-            }
-        try:
-            page = await catalog_client.search_products(
-                name=args.get("name"),
-                category_id=category_id,
-                min_price=args.get("minPrice"),
-                max_price=args.get("maxPrice"),
-                min_rating=args.get("minRating"),
-                sort_by=args.get("sortBy"),
-                sort_direction=args.get("sortDirection"),
-                limit=int(args.get("limit") or 10),
+            suggestions = category_cache.suggest(category_path)
+            log.warning(
+                "Unknown categoryPath: %r (suggestions: %s)", category_path, suggestions
             )
-            compact = []
+            hint = (
+                f" Did you mean one of: {', '.join(suggestions)}?"
+                if suggestions
+                else " See the CATEGORIES list for valid values."
+            )
+            category_error = f"Unknown categoryPath {category_path!r}.{hint}"
+
+        try:
+            if category_id is None:
+                # Category unresolved — only the name-only fallback runs.
+                pages = [await name_only_task]
+            else:
+                common = {
+                    "category_id": category_id,
+                    "min_price": args.get("minPrice"),
+                    "max_price": args.get("maxPrice"),
+                    "min_rating": args.get("minRating"),
+                    "sort_by": args.get("sortBy"),
+                    "sort_direction": args.get("sortDirection"),
+                    "limit": limit,
+                }
+                # Call 1: full search with name + category + all LLM filters.
+                # Call 2: same filters but without name — broadens the pool within the category.
+                with_name, without_name, name_only = await asyncio.gather(
+                    catalog_client.search_products(name=query_name, **common),
+                    catalog_client.search_products(name=None, **common),
+                    name_only_task,
+                )
+                pages = [with_name, without_name, name_only]
+        except Exception as ex:
+            log.warning("search_products failed: %s", ex)
+            return {"error": str(ex)}
+
+        compact: list[dict[str, Any]] = []
+        seen_in_result: set[UUID] = set()
+        total = 0
+        for page in pages:
+            total = max(total, int(page.get("totalElements", 0)))
             for p in page.get("content", []):
                 pid = UUID(p["id"])
                 if pid not in seen_products:
                     seen_products[pid] = p
                     seen_order.append(pid)
+                if pid in seen_in_result:
+                    continue
+                seen_in_result.add(pid)
                 compact.append(
                     {
                         "id": p["id"],
@@ -285,10 +318,14 @@ class LlmAgent:
                         "categoryId": p.get("categoryId"),
                     }
                 )
-            return {"products": compact, "totalMatches": page.get("totalElements", len(compact))}
-        except Exception as ex:
-            log.warning("search_products failed: %s", ex)
-            return {"error": str(ex)}
+        result: dict[str, Any] = {
+            "products": compact,
+            "totalMatches": total or len(compact),
+        }
+        log.info(result)
+        if category_error:
+            result["error"] = category_error
+        return result
 
 
 def _parse_args(raw: str | None) -> dict[str, Any]:
@@ -347,8 +384,8 @@ def _parse_final_response(
         except (ValueError, TypeError) as ex:
             log.warning("Dropping product — invalid id/score (%s): %r", ex, item)
             continue
-        # if score < threshold or pid not in seen_products:
-        #     continue
+        if score < threshold or pid not in seen_products:
+            continue
         scored.append((score, pid))
 
     scored.sort(key=lambda t: t[0], reverse=True)

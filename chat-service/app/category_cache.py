@@ -1,4 +1,5 @@
 import asyncio
+import difflib
 import logging
 from typing import Any
 
@@ -16,6 +17,7 @@ class CategoryCache:
     def __init__(self) -> None:
         self._formatted: str = ""
         self._lookup: dict[str, int] = {}
+        self._display_by_normalized: dict[str, str] = {}
         self._all_paths: list[str] = []
         self._task: asyncio.Task[None] | None = None
 
@@ -26,7 +28,33 @@ class CategoryCache:
     def resolve(self, query: str | None) -> int | None:
         if not query:
             return None
-        return self._lookup.get(_normalize(query))
+        normalized = _normalize(query)
+        if normalized in self._lookup:
+            return self._lookup[normalized]
+        close = difflib.get_close_matches(
+            normalized, self._lookup.keys(), n=1, cutoff=0.85
+        )
+        if close:
+            display = self._display_by_normalized.get(close[0], close[0])
+            log.info("Fuzzy-matched categoryPath %r to %r", query, display)
+            return self._lookup[close[0]]
+        return None
+
+    def suggest(self, query: str | None, n: int = 5) -> list[str]:
+        if not query:
+            return []
+        normalized = _normalize(query)
+        matches = difflib.get_close_matches(
+            normalized, self._lookup.keys(), n=n, cutoff=0.3
+        )
+        seen: set[str] = set()
+        out: list[str] = []
+        for m in matches:
+            display = self._display_by_normalized.get(m, m)
+            if display not in seen:
+                seen.add(display)
+                out.append(display)
+        return out
 
     @property
     def all_paths(self) -> list[str]:
@@ -37,11 +65,13 @@ class CategoryCache:
             roots = await catalog_client.get_category_tree()
             lines: list[str] = []
             lookup: dict[str, int] = {}
+            display: dict[str, str] = {}
             paths: list[str] = []
             for root in roots:
-                self._walk(lines, lookup, paths, root, [])
+                self._walk(lines, lookup, display, paths, root, [])
             self._formatted = "\n".join(lines)
             self._lookup = lookup
+            self._display_by_normalized = display
             self._all_paths = paths
             log.info("Refreshed category catalog (%d entries)", len(lines))
             return True
@@ -53,6 +83,7 @@ class CategoryCache:
         self,
         lines: list[str],
         lookup: dict[str, int],
+        display: dict[str, str],
         paths: list[str],
         node: dict[str, Any],
         path: list[str],
@@ -63,11 +94,15 @@ class CategoryCache:
         full_path = " > ".join(path)
         lines.append(f"- {full_path}")
         paths.append(full_path)
-        lookup[_normalize(full_path)] = cid
+        path_key = _normalize(full_path)
+        lookup[path_key] = cid
+        display[path_key] = full_path
         leaf_key = _normalize(name)
-        lookup.setdefault(leaf_key, cid)
+        if leaf_key not in lookup:
+            lookup[leaf_key] = cid
+            display[leaf_key] = full_path
         for child in node.get("children") or []:
-            self._walk(lines, lookup, paths, child, path)
+            self._walk(lines, lookup, display, paths, child, path)
         path.pop()
 
     async def start_refresh_loop(self) -> None:
