@@ -38,34 +38,47 @@ _SEARCH_PRODUCTS_TOOL = {
         "description": (
             "Search the marketplace catalog. Returns products matching the filters. "
             "Call this tool multiple times in parallel when the user's intent spans different "
-            "categories (e.g. a wedding needs wines AND formal wear AND gifts — issue one call per category)."
+            "categories (e.g. a wedding needs wines AND formal wear AND gifts — issue one call per category). "
+            "Both `name` and `categoryId` are required on every call."
         ),
+        "strict": True,
         "parameters": {
             "type": "object",
+            "additionalProperties": False,
             "properties": {
                 "name": {
-                    "type": ["string", "null"],
-                    "description": "Free-text substring match on product name. Use sparingly; prefer category filtering.",
+                    "type": "string",
+                    "description": "Free-text substring match on product name. REQUIRED. Use a single concrete keyword from the user's request (e.g. 'laptop', 'shirt', 'hdmi').",
                 },
-                "categoryId": {
-                    "type": ["integer", "null"],
-                    "description": "Category ID. Filtering is recursive — passing a parent ID searches all children.",
+                "categoryPath": {
+                    "type": "string",
+                    "description": "Category to search in. REQUIRED. Use either the leaf name ('Rings') or the full path ('Jewellery & Watches > Rings') exactly as it appears in the CATEGORIES list. Filtering is recursive — a parent path searches all children. The server resolves this to an internal ID.",
                 },
-                "minPrice": {"type": ["number", "null"], "description": "Min price in EUR (optional)."},
-                "maxPrice": {"type": ["number", "null"], "description": "Max price in EUR (optional)."},
-                "minRating": {"type": ["number", "null"], "description": "Min average rating 0-5 (optional)."},
+                "minPrice": {"type": ["number", "null"], "description": "Min price in USD. Pass null when not constrained."},
+                "maxPrice": {"type": ["number", "null"], "description": "Max price in USD. Pass null when not constrained."},
+                "minRating": {"type": ["number", "null"], "description": "Min average rating 0-5. Pass null when not constrained."},
                 "sortBy": {
                     "type": ["string", "null"],
                     "enum": ["price", "rating", "date", None],
-                    "description": "Sort field. Default 'rating'. Use 'price' for cheapest/most expensive queries.",
+                    "description": "Sort field. Default 'rating'. Use 'price' for cheapest/most expensive queries. Pass null for default.",
                 },
                 "sortDirection": {
                     "type": ["string", "null"],
                     "enum": ["asc", "desc", None],
-                    "description": "Sort direction. Default 'desc'. Use 'asc' for cheapest, 'desc' for most expensive.",
+                    "description": "Sort direction. Default 'desc'. Use 'asc' for cheapest, 'desc' for most expensive. Pass null for default.",
                 },
-                "limit": {"type": ["integer", "null"], "description": "Max results, 1-20. Default 10."},
+                "limit": {"type": ["integer", "null"], "description": "Max results, 1-20. Pass null for default of 10."},
             },
+            "required": [
+                "name",
+                "categoryPath",
+                "minPrice",
+                "maxPrice",
+                "minRating",
+                "sortBy",
+                "sortDirection",
+                "limit",
+            ],
         },
     },
 }
@@ -81,25 +94,26 @@ def _build_system_prompt() -> str:
 
 ### 1. SEARCH STRATEGY (TOOL USAGE)
 - **Mandatory Search:** You MUST call `search_products` at least once before recommending anything.
-- **Decompose Intents:** If the user asks for multiple things (e.g., "wedding outfit"), issue PARALLEL `search_products` calls for different categories (e.g., one for shirts, one for shoes).
-- **Category over Name:** The `categoryId` filter is your best tool. ONLY use category IDs from the CATEGORIES list below. Prefer deeper/narrower categories.
-- **Always Add a Name Search:** IN ADDITION to your category searches, ALWAYS issue ONE extra `search_products` call in parallel using only the `name` parameter (no categoryId, no rating filter — but still pass `maxPrice`/`minPrice` if the user gave a budget). Pick the single most obvious noun from the user's request: "hdmi" for "I need an hdmi cable", "laptop" for "help me find a laptop", "shirt" for "formal shirt". Prefer 1 keyword, max 3 words. The category tree often misclassifies items, so the name search catches matches the category filter misses. Skip this ONLY if the user's request is fully abstract with no concrete product noun (e.g. "I have a wedding coming up").
-- **Prices:** Always pass `maxPrice` or `minPrice` if the user mentions a budget. Re-apply these on every subsequent turn unless the user changes them.
+- **Required Params:** Every `search_products` call MUST include both `name` (a concrete keyword) AND `categoryPath` (from the CATEGORIES list). Neither can be null. Other filters (`minPrice`, `maxPrice`, `minRating`, `sortBy`, `sortDirection`, `limit`) are required by the schema too — pass `null` when you don't want to constrain them.
+- **Decompose Intents:** If the user's request spans multiple categories (e.g. "wedding outfit" → shirts AND shoes AND jewelry), issue PARALLEL `search_products` calls — one per category — all sharing the SAME `name` keyword (or a category-appropriate variant) plus that category's `categoryPath`.
+- **Picking the Keyword:** Use the most obvious single noun from the user's request: "hdmi" for "I need an hdmi cable", "laptop" for "help me find a laptop", "shirt" for "formal shirt", "tv" for "I want a tv". Prefer 1 word, max 3. For abstract requests with no concrete product noun (e.g. "I have a wedding coming up"), pick a representative keyword for each parallel call (e.g. `name="shirt"` + clothing category, `name="ring"` + jewelry category, `name="wine"` + wine category).
+- **Picking the Category:** Pass the EXACT name or full path as it appears in the CATEGORIES list — copy verbatim, do not abbreviate or invent. Examples: `categoryPath="Rings"` or `categoryPath="Jewellery & Watches > Rings"`. Use the full path when the leaf name might be ambiguous. Prefer deeper/narrower categories. Filtering is recursive — a parent path searches all children.
+- **Prices:** Pass `maxPrice` / `minPrice` when the user mentions a budget; otherwise pass null. Re-apply on every subsequent turn unless the user changes them.
 - **Iteration Limits:** Stop searching after a maximum of {max_iterations} rounds of tool calls.
 - **Memory & Refinement:** Each previous assistant message ends with two bracketed lines:
-  `[Searches you ran in this turn: name=laptop maxPrice=600; categoryId=33 maxPrice=600; ...]`
+  `[Searches you ran in this turn: name=laptop categoryPath=Laptops maxPrice=600; ...]`
   shows the exact tool calls you made, and `[Products shown to user in this reply: ...]`
   shows what was returned. Use these to decide between two modes:
     - **TUNE** (default): the user is refining the SAME subject — "cheaper", "in black",
       "actually $300", "show me more", "show me the most expensive one", "ditch the budget",
       "I'm a man" after a clothing query. Re-issue the previous searches with the constraint
       changed (adjust `maxPrice`, drop `maxPrice`, set `sortBy=price` + `sortDirection=desc`
-      for "most expensive", swap `name`, narrow `categoryId`). KEEP the subject keyword
+      for "most expensive", swap `name`, narrow `categoryPath`). KEEP the subject keyword
       (e.g. `name="tv"`) and previous category filters — never strip them on a tune. Prefer
       products NOT in the previous list.
     - **REPLACE**: the user pivoted to a NEW subject — "actually I want a tablet not a
       laptop", "show me jewelry instead", "different topic, find me a gift for my mom".
-      Drop the old `name`/`categoryId` entirely and start fresh.
+      Drop the old `name`/`categoryPath` entirely and start fresh.
   When uncertain between tune and replace, default to TUNE — most short follow-up messages
   are refinements, not pivots. NEVER call `search_products` with no parameters.
 
@@ -121,17 +135,18 @@ Your JSON must exactly match this schema:
   "_reasoning": "<Briefly explain your filtering and scoring logic to yourself here. Note which items failed the {threshold} threshold and why.>",
   "message": "<Friendly 1-3 sentence reply explaining to the user how the selected products fit their need. DO NOT mention IDs, prices, or product names, as the UI handles this.>",
   "products":[
-    {{"id": "<exact product id>", "score": <integer 95>}},
-    {{"id": "<exact product id>", "score": <integer 82>}}
+    {{"id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890", "score": 95}},
+    {{"id": "9f8e7d6c-5b4a-3c2d-1e0f-9a8b7c6d5e4f", "score": 82}}
   ]
 }}
 
 ### 4. JSON OUTPUT CONSTRAINTS
+- **Product IDs are UUIDs.** The `id` field MUST be a UUID string copied VERBATIM from the `id` value of a product returned in the tool results (e.g. "3843e2ac-aa42-5925-a544-7e6a53f2e0ac"). NEVER invent IDs. NEVER use placeholder text like "product1", "item_a", or "1". If you cannot find real UUIDs in the tool results, return an empty `"products": []` array instead of fabricating any.
 - **Threshold:** ONLY include products in the `"products"` array with a score >= {threshold}. Drop everything below.
 - **Limit:** Return a maximum of {max_products} products, ordered by score descending.
 - **Empty State:** If no products meet the threshold, return an empty array (`"products":[]`) and explain the lack of matches in the `"message"`.
 
-### CATEGORIES (id, full path):
+### CATEGORIES (one per line — pass the leaf or the full path as `categoryPath`):
 {categories}
 """
 
@@ -232,10 +247,22 @@ class LlmAgent:
     ) -> dict[str, Any]:
         if name != "search_products":
             return {"error": f"unknown tool: {name}"}
+        category_path = args.get("categoryPath")
+        category_id = category_cache.resolve(category_path)
+        if category_id is None:
+            log.warning("Unknown categoryPath: %r", category_path)
+            return {
+                "error": (
+                    f"Unknown categoryPath {category_path!r}. Use one of the exact "
+                    "values from the CATEGORIES list (leaf name or full path)."
+                ),
+                "products": [],
+                "totalMatches": 0,
+            }
         try:
             page = await catalog_client.search_products(
                 name=args.get("name"),
-                category_id=args.get("categoryId"),
+                category_id=category_id,
                 min_price=args.get("minPrice"),
                 max_price=args.get("maxPrice"),
                 min_rating=args.get("minRating"),
@@ -307,15 +334,18 @@ def _parse_final_response(
     scored: list[tuple[int, UUID]] = []
     for item in items:
         if not isinstance(item, dict):
+            log.warning("Dropping non-dict product item: %r", item)
             continue
         raw_id = item.get("id")
         raw_score = item.get("score")
         if raw_id is None or raw_score is None:
+            log.warning("Dropping product with missing id/score: %r", item)
             continue
         try:
             pid = UUID(str(raw_id))
             score = int(raw_score)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError) as ex:
+            log.warning("Dropping product — invalid id/score (%s): %r", ex, item)
             continue
         # if score < threshold or pid not in seen_products:
         #     continue
