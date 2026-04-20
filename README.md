@@ -6,7 +6,7 @@ A multi-tenant marketplace platform where buyers browse and purchase merchandise
 
 **Type:** Academic project  
 **Architecture:** Microservices  
-**Backend:** Java (Spring Boot)  
+**Backend:** Java (Spring Boot); AI/Chat service in Python (FastAPI)  
 **Frontend:** Angular + PrimeNG  
 **Communication:** REST (synchronous), RabbitMQ (asynchronous)
 
@@ -57,10 +57,11 @@ Six services plus an API Gateway, each a standalone Spring Boot application with
          ├── Seller Service (+ Admin endpoints)            │
          ├── Order Service ────publishes events──► RabbitMQ │
          ├── Analytics Service ◄──consumes events──────────┘
-         └── AI/Chat Service ◄──consumes events────────────┘
+         └── AI/Chat Service (FastAPI)
                 │
-                ├── MongoDB (vector store)
-                └── External LLM API
+                ├── MongoDB (chat sessions)
+                ├── Catalog Service (REST: category tree + product search)
+                └── External LLM API (tool-calling)
 ```
 
 ### 3.2 API Gateway
@@ -74,8 +75,8 @@ The gateway is the single external entry point. All downstream services are only
 
 ### 3.3 Inter-Service Communication
 
-- **Synchronous (REST):** Order Service → Catalog Service for stock validation at checkout
-- **Asynchronous (RabbitMQ):** Event-driven communication for analytics ingestion and AI service product indexing
+- **Synchronous (REST):** Order Service → Catalog Service for stock validation at checkout; AI/Chat Service → Catalog Service for category tree and product search
+- **Asynchronous (RabbitMQ):** Event-driven communication for analytics ingestion
 
 ### 3.4 Database Strategy
 
@@ -227,16 +228,26 @@ Events stored as documents in MongoDB time-series collections:
 
 ### 4.6 AI / Chat Service
 
-**Responsibility:** AI-powered product recommendations via conversational interface using RAG.
+**Responsibility:** AI-powered product recommendations via conversational interface using LLM tool-calling against the existing catalog search API.
 
-- Consumes product events from RabbitMQ (product created/updated/deleted)
-- Generates vector embeddings (sentence transformer) for product data (name + description + category + price)
-- Stores embeddings in MongoDB vector store (index auto-updates)
-- On buyer query: performs vector similarity search → retrieves relevant products → feeds context into LLM
-- LLM returns structured response (product IDs + explanation), frontend renders product cards with links
-- Uses external LLM API (not locally hosted)
+**Runtime:** Python 3 / FastAPI.
 
-**Database:** MongoDB (vector store with product embeddings)
+**How it works:**
+
+- The service exposes a small REST API for chat sessions and messages: list sessions, create session, fetch session, delete session, and send a message to a session (`/api/chat/sessions[/{id}/messages]`). Chat sessions and message history are persisted in MongoDB.
+- Product retrieval is delegated to the catalog service — the chat service calls the existing catalog search endpoint (`GET /api/products?name=…&categoryId=…&…`) over REST.
+- On startup (and every 30 min) it fetches the category tree from the catalog service and builds an in-memory lookup (`categoryPath → categoryId`, with `difflib` fuzzy matching for near misses).
+- On each user message, the service calls an **OpenAI-compatible chat completions endpoint** (Together AI / Llama 3.3 70B Instruct Turbo) with a single tool defined: `search_products(name, categoryPath, minPrice, maxPrice, minRating, sortBy, sortDirection, limit)`. The LLM decides when to call it, with what arguments, and can issue multiple parallel tool calls (one per category) for multi-intent requests.
+- For every `search_products` tool call the LLM makes, the service fans out **three** parallel catalog search requests — `(name + category + filters)`, `(category + filters, no name)`, `(name only, no category)` — and merges the deduplicated union into the tool result it returns to the LLM. This widens the candidate pool so the LLM can reject off-topic matches.
+- After it has enough results, the LLM returns a final JSON object of the form `{ "_reasoning": "…", "message": "…", "products": [{ "id": "<uuid>", "score": 0-100 }, …] }`. The service filters by a score threshold, orders by score, caps at `chat_max_products`, and returns the matching `ProductSummary` records to the client.
+- The service surfaces prior turns' `searchParams` and `productNames` back to the LLM as bracketed hints on each stored assistant message, so the model can **TUNE** previous searches (cheaper, different sort, tighter category) or **REPLACE** them when the user pivots to a new subject.
+
+**Database:** MongoDB (`chat_db.chat_sessions` — one document per conversation, with embedded messages).
+
+**External dependencies:**
+
+- Catalog Service — `GET /api/categories`, `GET /api/products`
+- LLM provider — OpenAI-compatible `/v1/chat/completions` with tool-calling (Together AI by default; configurable via `LLM_BASE_URL` / `LLM_MODEL` / `LLM_API_KEY`)
 
 ---
 
@@ -252,7 +263,7 @@ Events stored as documents in MongoDB time-series collections:
 | Order Service | 8083 | PostgreSQL | RabbitMQ (producer) |
 | Seller Service | 8084 | PostgreSQL | RabbitMQ (consumer, optional) |
 | Analytics Service | 8085 | MongoDB | RabbitMQ (consumer) |
-| AI/Chat Service | 8086 | MongoDB | RabbitMQ (consumer) |
+| AI/Chat Service | 8086 | MongoDB | — (REST to Catalog Service + external LLM) |
 
 ### 5.2 Object Storage (MinIO)
 
@@ -279,7 +290,7 @@ shopping-platform/
 ├── order-service/
 ├── seller-service/
 ├── analytics-service/
-├── ai-chat-service/
+├── chat-service/           (Python / FastAPI — AI chat)
 ├── frontend/               (Angular)
 ├── seed/                   (Python data-seeding pipeline)
 └── docker-compose.yml

@@ -14,7 +14,7 @@ graph TD
         Order["Order Service (PostgreSQL)"]
         Seller["Seller Service (PostgreSQL)"]
         Analytics["Analytics Service (MongoDB)"]
-        AI["AI/Chat Service (MongoDB)"]
+        AI["AI/Chat Service (FastAPI + MongoDB)"]
     end
 
     MQ["RabbitMQ"]
@@ -33,12 +33,12 @@ graph TD
     Order -- "ORDER_PLACED\nORDER_FULFILLED" --> MQ
 
     MQ --> Analytics
-    MQ --> AI
 
     Order -- "stock validation (REST)" --> Catalog
     Catalog -- "purchase verification (REST)" --> Order
 
-    AI --> LLM
+    AI -- "category tree + product search (REST)" --> Catalog
+    AI -- "tool-calling chat completions" --> LLM
     Catalog -- "upload/read (public URL)" --> MinIO
     Seller -- "upload (presigned URL on access)" --> MinIO
 ```
