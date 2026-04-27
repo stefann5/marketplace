@@ -10,7 +10,8 @@ classDiagram
         +BigDecimal price
         +int stock
         +int version
-        +UUID categoryId
+        +Long categoryId
+        +List~ProductImage~ images
         +double averageRating
         +int reviewCount
         +int purchaseCount
@@ -20,15 +21,15 @@ classDiagram
 
     class ProductImage {
         +UUID id
-        +UUID productId
+        +Product product
         +String imageUrl
         +int displayOrder
     }
 
     class Category {
-        +UUID id
+        +Long id
         +String name
-        +UUID parentId
+        +Long parentId
     }
 
     class Review {
@@ -43,61 +44,96 @@ classDiagram
     }
 
     class ProductController {
-        +getProducts(SearchCriteria) Page~Product~
-        +getProduct(UUID) Product
-        +createProduct(ProductRequest) Product
-        +updateProduct(UUID, ProductRequest) Product
-        +deleteProduct(UUID) void
+        +getAll(...) Page~ProductResponse~
+        +getById(UUID) ProductResponse
+        +getSellerProducts(UUID, Pageable) Page~ProductResponse~
+        +create(UUID, ProductRequest) ProductResponse
+        +update(UUID, UUID, ProductRequest) ProductResponse
+        +delete(UUID, UUID) void
+        +uploadImages(UUID, UUID, List~MultipartFile~) ProductResponse
+        +deleteImage(UUID, UUID, UUID) ProductResponse
     }
 
     class ReviewController {
-        +getReviews(UUID) List~Review~
-        +createReview(UUID, ReviewRequest) Review
-        +updateReview(UUID, ReviewRequest) Review
+        +getReviews(UUID, Pageable) Page~ReviewResponse~
+        +getMyReview(UUID, UUID) ReviewResponse
+        +createReview(UUID, UUID, ReviewRequest) ReviewResponse
+        +updateReview(UUID, UUID, ReviewRequest) ReviewResponse
     }
 
     class CategoryController {
-        +getCategories() List~Category~
-        +createCategory(CategoryRequest) Category
-        +deleteCategory(UUID) void
+        +getAll() List~CategoryResponse~
+        +getSubtree(Long) CategoryResponse
+    }
+
+    class InternalProductController {
+        +checkStock(List~StockCheckRequest~) List~StockCheckResponse~
+        +decrementStock(List~StockDecrementRequest~) void
     }
 
     class ProductService {
-        +searchProducts(SearchCriteria) Page~Product~
-        +getProduct(UUID) Product
-        +createProduct(ProductRequest) Product
-        +updateProduct(UUID, ProductRequest) Product
-        +deleteProduct(UUID) void
-        -publishProductEvent(Product, EventType) void
+        +searchProducts(ProductSearchCriteria, Pageable) Page~ProductResponse~
+        +getProduct(UUID) ProductResponse
+        +getSellerProducts(UUID, Pageable) Page~ProductResponse~
+        +createProduct(UUID, ProductRequest) ProductResponse
+        +updateProduct(UUID, UUID, ProductRequest) ProductResponse
+        +deleteProduct(UUID, UUID) void
+        +uploadImages(UUID, UUID, List~MultipartFile~) ProductResponse
+        +deleteImage(UUID, UUID, UUID) ProductResponse
+        +checkStock(List~StockCheckRequest~) List~StockCheckResponse~
+        +decrementStock(List~StockDecrementRequest~) void
     }
 
     class ReviewService {
-        +getReviews(UUID productId) List~Review~
-        +createReview(UUID productId, ReviewRequest) Review
-        +updateReview(UUID reviewId, ReviewRequest) Review
-        -verifyPurchase(UUID productId) boolean
-        -updateProductRating(UUID productId) void
+        +getReviews(UUID, Pageable) Page~ReviewResponse~
+        +getUserReview(UUID, UUID) ReviewResponse
+        +createReview(UUID, UUID, ReviewRequest) ReviewResponse
+        +updateReview(UUID, UUID, ReviewRequest) ReviewResponse
+        -updateProductRating(UUID) void
     }
 
     class CategoryService {
-        +getAll() List~Category~
-        +getSubtree(UUID) List~Category~
-        +create(CategoryRequest) Category
-        +delete(UUID) void
+        +getAll() List~CategoryResponse~
+        +getSubtree(Long) CategoryResponse
     }
 
-    class ProductEventPublisher {
-        +publishProductViewed(UUID productId) void
-        +publishProductSearched(String term, List~UUID~ resultIds) void
+    class MinioService {
+        +uploadImage(UUID, MultipartFile) String
+        +deleteImage(String) void
+        +deleteAllProductImages(UUID) void
     }
 
-    Product "1" --> "1..*" ProductImage : "has"
-    Product "*" --> "1" Category
+    class EventPublisher {
+        +publishProductViewed(ProductViewedEvent) void
+        +publishProductSearched(ProductSearchedEvent) void
+    }
+
+    class OrderClient {
+        +hasUserPurchasedProduct(UUID, UUID) boolean
+    }
+
+    class AuthClient {
+        +getUserEmail(UUID) String
+    }
+
+    class SellerClient {
+        +isTenantActive(UUID) boolean
+        +getActiveTenantIds() List~UUID~
+    }
+
+    Product "1" --> "0..*" ProductImage : "has"
+    Product "*" --> "0..1" Category
     Review "*" --> "1" Product : "reviews"
     Category "*" --> "0..1" Category : "parent of"
+
     ProductController "1" --> "1" ProductService
     ReviewController "1" --> "1" ReviewService
     CategoryController "1" --> "1" CategoryService
-    ProductService "1" --> "1" ProductEventPublisher
-    ReviewService "1" --> "1" ProductService : "update rating"
+    InternalProductController "1" --> "1" ProductService
+
+    ProductService "1" --> "1" MinioService
+    ProductService "1" --> "1" EventPublisher
+    ProductService "1" --> "1" SellerClient
+    ReviewService "1" --> "1" OrderClient
+    ReviewService "1" --> "1" AuthClient
 ```

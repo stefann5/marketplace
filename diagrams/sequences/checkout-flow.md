@@ -9,24 +9,26 @@ sequenceDiagram
     participant MQ as RabbitMQ
     participant AS as Analytics Service
 
-    Buyer->>GW: POST /orders/checkout
-    GW->>OS: POST /checkout (X-User-Id, X-Tenant-Id headers)
+    Buyer->>GW: POST /api/orders/checkout
+    GW->>OS: POST /api/orders/checkout (X-User-Id)
 
-    OS->>CS: GET /internal/products/stock-check (batch)
-    CS-->>OS: stock availability
+    OS->>OS: load cart for user
+
+    OS->>CS: POST /internal/products/stock-check (batch)
+    CS-->>OS: stock availability per product
 
     OS->>OS: split cart items by tenantId
 
-    OS->>CS: PATCH /internal/products/stock (decrement, optimistic lock)
-    CS-->>OS: updated stock
+    OS->>CS: PATCH /internal/products/stock-decrement (optimistic lock)
+    CS-->>OS: 200 OK (or 409 on concurrent stock change)
 
-    OS->>OS: persist orders & order items
+    OS->>OS: persist Orders + OrderItems (status=PURCHASED)
     OS->>OS: clear cart
 
-    OS-->>GW: List~Order~
+    OS--)MQ: ORDER_PLACED event (async, per order)
+    OS-->>GW: List~OrderResponse~
     GW-->>Buyer: orders created
 
-    OS--)MQ: ORDER_PLACED event (async)
     MQ--)AS: consume ORDER_PLACED
-    AS->>AS: store analytics event in MongoDB
+    AS->>AS: save analytics event(s) in MongoDB
 ```

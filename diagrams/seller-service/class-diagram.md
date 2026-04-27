@@ -14,13 +14,15 @@ classDiagram
         +String contactAddress
         +String logoUrl
         +SellerStatus status
+        +List~SellerDocument~ documents
+        +SellerTheme theme
         +LocalDateTime createdAt
         +LocalDateTime updatedAt
     }
 
     class SellerDocument {
         +UUID id
-        +UUID sellerId
+        +SellerProfile seller
         +String fileName
         +String objectKey
         +String contentType
@@ -29,6 +31,7 @@ classDiagram
 
     class SellerTheme {
         +UUID sellerId
+        +SellerProfile seller
         +String preset
         +String primaryColor
         +String fontFamily
@@ -46,54 +49,66 @@ classDiagram
     }
 
     class SellerController {
-        +registerSeller(MultipartFile[], SellerRegistrationRequest) SellerProfile
-        +getMyProfile() SellerProfile
-        +updateProfile(UpdateProfileRequest) SellerProfile
-        +updateLogo(MultipartFile) SellerProfile
-        +getSellerBySlug(String slug) SellerProfile
-        +getTheme() SellerTheme
-        +updateTheme(ThemeRequest) SellerTheme
+        +register(UUID, UUID, SellerRegistrationRequest, List~MultipartFile~, MultipartFile) SellerProfileResponse
+        +registerPublic(String, SellerRegistrationRequest, List~MultipartFile~, MultipartFile) SellerProfileResponse
+        +getMyProfile(UUID) SellerProfileResponse
+        +updateProfile(UUID, UpdateProfileRequest) SellerProfileResponse
+        +updateLogo(UUID, MultipartFile) SellerProfileResponse
+        +listActive() List~SellerProfileResponse~
+        +getBySlug(String) SellerProfileResponse
+        +getTheme(UUID) ThemeResponse
+        +updateTheme(UUID, ThemeRequest) ThemeResponse
     }
 
     class AdminSellerController {
-        +listSellers(SellerStatus) List~SellerProfile~
-        +getSellerDetail(UUID) SellerProfile
-        +approveSeller(UUID) SellerProfile
-        +rejectSeller(UUID) SellerProfile
-        +suspendSeller(UUID) SellerProfile
+        +list(SellerStatus) List~SellerProfileResponse~
+        +getDetail(UUID) SellerProfileResponse
+        +approve(UUID) void
+        +reject(UUID) void
+        +suspend(UUID) void
     }
 
     class InternalSellerController {
-        +getSellerStatus(UUID userId) String
+        +getStatus(UUID) Map
+        +getStatusByTenant(UUID) Map
+        +getActiveTenants() Map
     }
 
     class SellerService {
-        +register(SellerRegistrationRequest, MultipartFile[], MultipartFile, String, String) SellerProfile
-        +getByUserId(UUID) SellerProfile
-        +getBySlug(String) SellerProfile
-        +updateProfile(UUID, UpdateProfileRequest) SellerProfile
-        +updateLogo(UUID, MultipartFile) SellerProfile
-        +getTheme(UUID) SellerTheme
-        +updateTheme(UUID, ThemeRequest) SellerTheme
-        +listByStatus(SellerStatus) List~SellerProfile~
-        +getById(UUID) SellerProfile
-        +approve(UUID) SellerProfile
-        +reject(UUID) SellerProfile
-        +suspend(UUID) SellerProfile
+        +registerPublic(String, SellerRegistrationRequest, List~MultipartFile~, MultipartFile) SellerProfileResponse
+        +register(UUID, UUID, SellerRegistrationRequest, List~MultipartFile~, MultipartFile) SellerProfileResponse
+        +getByUserId(UUID) SellerProfileResponse
+        +getBySlug(String) SellerProfileResponse
+        +updateProfile(UUID, UpdateProfileRequest) SellerProfileResponse
+        +updateLogo(UUID, MultipartFile) SellerProfileResponse
+        +getTheme(UUID) ThemeResponse
+        +updateTheme(UUID, ThemeRequest) ThemeResponse
+        +listByStatus(SellerStatus) List~SellerProfileResponse~
+        +getById(UUID) SellerProfileResponse
+        +approve(UUID) void
+        +reject(UUID) void
+        +suspend(UUID) void
         +getStatusByUserId(UUID) String
+        +getStatusByTenantId(UUID) String
+        +getActiveTenantIds() List~UUID~
     }
 
     class MinioService {
-        +uploadDocument(String, MultipartFile) String
-        +uploadLogo(String, MultipartFile) String
+        +uploadDocument(UUID, MultipartFile) String
+        +uploadLogo(UUID, MultipartFile) String
         +getPresignedUrl(String) String
     }
 
+    class AuthClient {
+        +getUserByEmail(String) InternalAuthUserResponse
+    }
+
     SellerProfile "1" --> "0..*" SellerDocument
-    SellerProfile "1" --> "1" SellerTheme
-    SellerProfile "*" --> "1" SellerStatus
+    SellerProfile "1" --> "0..1" SellerTheme
+    SellerProfile --> SellerStatus
     SellerController "1" --> "1" SellerService
     AdminSellerController "1" --> "1" SellerService
     InternalSellerController "1" --> "1" SellerService
     SellerService "1" --> "1" MinioService
+    SellerService "1" --> "1" AuthClient
 ```
