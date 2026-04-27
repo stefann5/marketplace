@@ -132,7 +132,7 @@ export class SellerShopComponent implements OnInit, OnDestroy {
   addToCart(event: Event, product: Product): void {
     event.stopPropagation();
     if (!this.authService.isLoggedIn()) {
-      this.router.navigate(['/login']);
+      this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
       return;
     }
     this.cartService.addItem({

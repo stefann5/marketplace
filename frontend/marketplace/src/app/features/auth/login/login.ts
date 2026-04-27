@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { Location } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -26,20 +27,37 @@ import { AuthService } from '../../../core/services/auth.service';
   providers: [MessageService],
   templateUrl: './login.html'
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   loading = false;
+  returnUrl: string | null = null;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
+    private route: ActivatedRoute,
+    private location: Location,
     private messageService: MessageService
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
     });
+  }
+
+  ngOnInit(): void {
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+  }
+
+  goBack(): void {
+    if (this.returnUrl) {
+      this.router.navigateByUrl(this.returnUrl);
+    } else if (window.history.length > 1) {
+      this.location.back();
+    } else {
+      this.router.navigate(['/']);
+    }
   }
 
   onSubmit(): void {
@@ -49,7 +67,13 @@ export class LoginComponent {
     const { email, password } = this.loginForm.value;
 
     this.authService.login(email, password).subscribe({
-      next: () => this.router.navigate(['/']),
+      next: () => {
+        if (this.returnUrl) {
+          this.router.navigateByUrl(this.returnUrl);
+        } else {
+          this.router.navigate(['/']);
+        }
+      },
       error: (err) => {
         this.loading = false;
         this.messageService.add({

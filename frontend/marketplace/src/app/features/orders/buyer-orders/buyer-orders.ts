@@ -8,8 +8,10 @@ import { TagModule } from 'primeng/tag';
 import { PaginatorModule } from 'primeng/paginator';
 import { OrderService } from '../../../core/services/order.service';
 import { ProductService } from '../../../core/services/product.service';
+import { SellerService } from '../../../core/services/seller.service';
 import { Order } from '../../../core/models/order.model';
 import { Product } from '../../../core/models/product.model';
+import { SellerProfile } from '../../../core/models/seller.model';
 
 @Component({
   selector: 'app-buyer-orders',
@@ -21,6 +23,7 @@ import { Product } from '../../../core/models/product.model';
 export class BuyerOrdersComponent implements OnInit {
   orders: Order[] = [];
   productMap: Record<string, Product> = {};
+  sellerMap = new Map<string, SellerProfile>();
   loading = false;
 
   page = 0;
@@ -30,11 +33,20 @@ export class BuyerOrdersComponent implements OnInit {
   constructor(
     private orderService: OrderService,
     private productService: ProductService,
+    private sellerService: SellerService,
     private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+    this.sellerService.getTenantMap().subscribe(map => {
+      this.sellerMap = map;
+      this.cdr.markForCheck();
+    });
     this.loadOrders();
+  }
+
+  getSellerName(tenantId: string): string {
+    return this.sellerMap.get(tenantId)?.companyName ?? 'Unknown seller';
   }
 
   loadOrders(): void {

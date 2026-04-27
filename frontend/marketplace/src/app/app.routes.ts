@@ -155,6 +155,12 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: ''
+    loadComponent: () => import('./core/layout/buyer-layout').then(m => m.BuyerLayoutComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/not-found/not-found').then(m => m.NotFoundComponent)
+      }
+    ]
   }
 ];
