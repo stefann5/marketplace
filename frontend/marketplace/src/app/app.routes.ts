@@ -32,6 +32,16 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'sellers',
+    loadComponent: () => import('./core/layout/buyer-layout').then(m => m.BuyerLayoutComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/sellers/sellers-list').then(m => m.SellersListComponent)
+      }
+    ]
+  },
+  {
     path: 'cart',
     loadComponent: () => import('./core/layout/buyer-layout').then(m => m.BuyerLayoutComponent),
     canActivate: [authGuard, buyerGuard],

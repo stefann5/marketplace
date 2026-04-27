@@ -7,7 +7,6 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TabsModule } from 'primeng/tabs';
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { ProductService } from '../../core/services/product.service';
 import { CategoryService } from '../../core/services/category.service';
@@ -29,7 +28,7 @@ const HOME_PRODUCTS_PER_CATEGORY = 7;
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonModule, TagModule, InputNumberModule, SkeletonModule, TabsModule],
+  imports: [CommonModule, FormsModule, ButtonModule, TagModule, InputNumberModule, SkeletonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './home.html'
 })
@@ -138,6 +137,10 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   visitShop(seller: SellerProfile): void {
     this.router.navigate(['/shop', seller.slug]);
+  }
+
+  seeAllSellers(): void {
+    this.router.navigate(['/sellers']);
   }
 
   visitSellerShopByTenant(event: Event, tenantId: string): void {
