@@ -217,12 +217,17 @@ Events stored as documents in MongoDB time-series collections:
 }
 ```
 
-**Seller dashboard metrics:**
+**Seller dashboard metrics (tenant-scoped):**
 
-- **Revenue:** Total revenue (today/week/month/year with period comparison), revenue over time (line chart, selectable granularity), revenue by category (pie chart)
-- **Orders:** Total orders by fulfilled/unfulfilled, orders over time (bar chart), average order value trend, average time to fulfill
-- **Product performance:** Top 10 products by revenue, top 10 by units sold, worst performing products, low stock warnings
-- **Customer behavior:** Product view counts, view-to-purchase conversion rate per product, most searched terms leading to their products, peak shopping hours heatmap (day of week × hour)
+- **Revenue:** Total revenue plus today / this week / this month / this year, with month-over-month percentage change. Revenue over time as a line chart (`period=week` → last 7 days by day, `period=month` → last 30 days by day, `period=year` → last 12 months by month).
+- **Orders:** Total orders split into fulfilled and unfulfilled, plus an orders-over-time bar chart with the same `week` / `month` / `year` / `all` granularity options.
+- **Top products:** Top 10 products, sorted by revenue or by units sold (toggle).
+- **Product views:** Top 20 products by view count.
+- **Search terms:** Top 20 search terms across the platform (global, not tenant-scoped; this endpoint ignores the caller's tenant).
+
+**Marketplace-wide endpoint:**
+
+- **Top categories:** `GET /api/analytics/categories/top` returns the top N categories by revenue across all sellers. Consumed by the marketplace home page, not by the seller dashboard.
 
 **Database:** MongoDB (time-series collections for events)
 

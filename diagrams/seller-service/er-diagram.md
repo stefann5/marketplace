@@ -2,10 +2,10 @@
 
 ```mermaid
 erDiagram
-    SELLER_PROFILE {
+    SELLER_PROFILES {
         uuid id PK
         uuid user_id UK
-        uuid tenant_id
+        uuid tenant_id UK
         string company_name
         text description
         string slug UK
@@ -18,7 +18,7 @@ erDiagram
         timestamp updated_at
     }
 
-    SELLER_DOCUMENT {
+    SELLER_DOCUMENTS {
         uuid id PK
         uuid seller_id FK
         string file_name
@@ -27,8 +27,8 @@ erDiagram
         timestamp uploaded_at
     }
 
-    SELLER_THEME {
-        uuid seller_id PK
+    SELLER_THEMES {
+        uuid seller_id PK, FK
         string preset
         string primary_color
         string font_family
@@ -37,6 +37,6 @@ erDiagram
         string logo_url
     }
 
-    SELLER_PROFILE ||--|{ SELLER_DOCUMENT : "has"
-    SELLER_PROFILE ||--|| SELLER_THEME : "has"
+    SELLER_PROFILES ||--o{ SELLER_DOCUMENTS : "has"
+    SELLER_PROFILES ||--o| SELLER_THEMES : "has"
 ```

@@ -3,12 +3,20 @@
 ```mermaid
 classDiagram
     class AnalyticsEvent {
+        <<MongoDB document>>
         +String id
         +String tenantId
         +EventType eventType
         +String productId
+        +String productName
         +String userId
-        +Map~String, Object~ metadata
+        +String orderId
+        +String searchTerm
+        +Integer quantity
+        +double unitPrice
+        +double orderTotal
+        +Long categoryId
+        +List~String~ resultProductIds
         +Instant timestamp
     }
 
@@ -20,39 +28,54 @@ classDiagram
         ORDER_FULFILLED
     }
 
-    class AnalyticsEventConsumer {
-        +handleProductViewed(ProductViewedEvent) void
-        +handleProductSearched(ProductSearchedEvent) void
-        +handleOrderPlaced(OrderPlacedEvent) void
-        +handleOrderFulfilled(OrderFulfilledEvent) void
+    class EventConsumer {
+        +handleEvent(Message) void
+        -handleProductViewed(JsonNode) void
+        -handleProductSearched(JsonNode) void
+        -handleOrderPlaced(JsonNode) void
+        -handleOrderFulfilled(JsonNode) void
     }
 
-    class AnalyticsDashboardController {
-        +getRevenueSummary(String period) RevenueSummary
-        +getRevenueOverTime(String granularity) List~DataPoint~
-        +getRevenueByCategory() List~CategoryRevenue~
-        +getOrderMetrics() OrderMetrics
-        +getTopProducts() List~ProductMetric~
-        +getCustomerBehavior() CustomerBehaviorReport
+    class AnalyticsController {
+        +getRevenue(String) RevenueSummaryResponse
+        +getRevenueChart(String, String) RevenueChartResponse
+        +getOrders(String, String) OrderSummaryResponse
+        +getTopProducts(String, String, int) List~TopProductResponse~
+        +getProductViews(String) List~ProductViewResponse~
+        +getSearchTerms(String) List~SearchTermResponse~
+    }
+
+    class CategoryAnalyticsController {
+        +getTopCategories(int) List~TopCategoryResponse~
     }
 
     class AnalyticsService {
-        +getRevenueSummary(String tenantId, String period) RevenueSummary
-        +getRevenueOverTime(String tenantId, String granularity) List~DataPoint~
-        +getOrderMetrics(String tenantId) OrderMetrics
-        +getTopProducts(String tenantId) List~ProductMetric~
-        +getSearchTerms(String tenantId) List~SearchTerm~
-        +getPeakHours(String tenantId) HeatmapData
+        +getRevenueSummary(String) RevenueSummaryResponse
+        +getRevenueChart(String, String) RevenueChartResponse
+        +getOrderSummary(String, String) OrderSummaryResponse
+        +getTopProducts(String, String, int) List~TopProductResponse~
+        +getProductViews(String) List~ProductViewResponse~
+        +getSearchTerms() List~SearchTermResponse~
     }
 
-    class EventRepository {
+    class CategoryAnalyticsService {
+        +getTopCategories(int) List~TopCategoryResponse~
+    }
+
+    class AnalyticsEventRepository {
         <<interface>>
-        +save(AnalyticsEvent) void
-        +findByTenantIdAndTimestampBetween(String, Instant, Instant) List~AnalyticsEvent~
-        +aggregateRevenueByPeriod(String tenantId, String period) List~DataPoint~
     }
 
-    AnalyticsEventConsumer "1" --> "1" EventRepository
-    AnalyticsDashboardController "1" --> "1" AnalyticsService
-    AnalyticsService "1" --> "1" EventRepository
+    class MongoTemplate {
+        <<Spring>>
+        +save(Object) Object
+        +aggregate(Aggregation, String, Class) AggregationResults
+    }
+
+    AnalyticsEvent --> EventType
+    EventConsumer "1" --> "1" MongoTemplate
+    AnalyticsController "1" --> "1" AnalyticsService
+    CategoryAnalyticsController "1" --> "1" CategoryAnalyticsService
+    AnalyticsService "1" --> "1" MongoTemplate
+    CategoryAnalyticsService "1" --> "1" MongoTemplate
 ```

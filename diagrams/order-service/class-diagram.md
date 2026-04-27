@@ -5,16 +5,18 @@ classDiagram
     class Cart {
         +UUID id
         +UUID userId
+        +List~CartItem~ items
         +LocalDateTime updatedAt
     }
 
     class CartItem {
         +UUID id
-        +UUID cartId
+        +Cart cart
         +UUID productId
         +UUID tenantId
         +int quantity
         +BigDecimal unitPrice
+        +Long categoryId
     }
 
     class Order {
@@ -23,15 +25,17 @@ classDiagram
         +UUID tenantId
         +OrderStatus status
         +BigDecimal total
+        +List~OrderItem~ items
         +LocalDateTime createdAt
     }
 
     class OrderItem {
         +UUID id
-        +UUID orderId
+        +Order order
         +UUID productId
         +int quantity
         +BigDecimal unitPrice
+        +Long categoryId
     }
 
     class OrderStatus {
@@ -41,54 +45,62 @@ classDiagram
     }
 
     class CartController {
-        +getCart() Cart
-        +addItem(AddItemRequest) Cart
-        +updateItem(UUID itemId, int qty) Cart
-        +removeItem(UUID itemId) Cart
+        +getCart(UUID) CartResponse
+        +addItem(UUID, AddItemRequest) CartResponse
+        +updateItem(UUID, UUID, UpdateItemRequest) CartResponse
+        +removeItem(UUID, UUID) CartResponse
     }
 
     class OrderController {
-        +checkout() List~Order~
-        +getBuyerOrders() List~Order~
-        +getSellerOrders() List~Order~
-        +fulfillOrder(UUID orderId) Order
-        +hasUserPurchasedProduct(UUID productId) boolean
+        +checkout(UUID) List~OrderResponse~
+        +getBuyerOrders(UUID, int, int) Page~OrderResponse~
+        +getSellerOrders(UUID, OrderStatus, int, int) Page~OrderResponse~
+        +fulfillOrder(UUID, UUID) OrderResponse
+        +checkPurchase(UUID, UUID) Map
     }
 
     class CartService {
-        +getCart() Cart
-        +addItem(UUID productId, int qty) Cart
-        +updateItem(UUID itemId, int qty) Cart
-        +removeItem(UUID itemId) Cart
-        +clearCart() void
+        +getCart(UUID) CartResponse
+        +addItem(UUID, AddItemRequest) CartResponse
+        +updateItem(UUID, UUID, int) CartResponse
+        +removeItem(UUID, UUID) CartResponse
+        +clearCart(UUID) void
+        ~getOrCreateCart(UUID) Cart
     }
 
     class CheckoutService {
-        +checkout() List~Order~
+        +checkout(UUID) List~OrderResponse~
         -validateStock(List~CartItem~) void
-        -splitByTenant(List~CartItem~) Map~UUID, List~CartItem~~
         -decrementStock(List~CartItem~) void
-        -publishOrderPlaced(Order) void
+        -createOrder(UUID, UUID, List~CartItem~) Order
     }
 
     class OrderService {
-        +getBuyerOrders() List~Order~
-        +getSellerOrders() List~Order~
-        +fulfillOrder(UUID orderId) void
-        +hasUserPurchasedProduct(UUID productId) boolean
+        +getBuyerOrdersPaged(UUID, int, int) Page~OrderResponse~
+        +getSellerOrdersPaged(UUID, OrderStatus, int, int) Page~OrderResponse~
+        +fulfillOrder(UUID, UUID) OrderResponse
+        +hasUserPurchasedProduct(UUID, UUID) boolean
     }
 
-    class OrderEventPublisher {
-        +publishOrderPlaced(Order) void
-        +publishOrderFulfilled(Order) void
+    class EventPublisher {
+        +publishOrderPlaced(OrderPlacedEvent) void
+        +publishOrderFulfilled(OrderFulfilledEvent) void
+    }
+
+    class CatalogClient {
+        +checkStock(List~StockCheckRequest~) List~StockCheckResponse~
+        +decrementStock(List~StockDecrementRequest~) void
     }
 
     Cart "1" --> "0..*" CartItem
     Order "1" --> "1..*" OrderItem
+    Order --> OrderStatus
+
     CartController "1" --> "1" CartService
     OrderController "1" --> "1" CheckoutService
     OrderController "1" --> "1" OrderService
     CheckoutService "1" --> "1" CartService
-    CheckoutService "1" --> "1" OrderEventPublisher
-    OrderService "1" --> "1" OrderEventPublisher
+    CheckoutService "1" --> "1" CatalogClient
+    CheckoutService "1" --> "1" EventPublisher
+    OrderService "1" --> "1" EventPublisher
 ```
