@@ -253,7 +253,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   addToCart(): void {
     if (!this.product || this.addingToCart) return;
     if (!this.authService.isLoggedIn()) {
-      this.router.navigate(['/login']);
+      this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
       return;
     }
     this.addingToCart = true;

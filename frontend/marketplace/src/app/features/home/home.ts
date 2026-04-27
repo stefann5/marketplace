@@ -7,7 +7,6 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SkeletonModule } from 'primeng/skeleton';
-import { TabsModule } from 'primeng/tabs';
 import { AnalyticsService } from '../../core/services/analytics.service';
 import { ProductService } from '../../core/services/product.service';
 import { CategoryService } from '../../core/services/category.service';
@@ -29,7 +28,7 @@ const HOME_PRODUCTS_PER_CATEGORY = 7;
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonModule, TagModule, InputNumberModule, SkeletonModule, TabsModule],
+  imports: [CommonModule, FormsModule, ButtonModule, TagModule, InputNumberModule, SkeletonModule],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './home.html'
 })
@@ -140,6 +139,10 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.router.navigate(['/shop', seller.slug]);
   }
 
+  seeAllSellers(): void {
+    this.router.navigate(['/sellers']);
+  }
+
   visitSellerShopByTenant(event: Event, tenantId: string): void {
     event.stopPropagation();
     const seller = this.sellerMap.get(tenantId);
@@ -190,7 +193,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   addToCart(event: Event, product: Product): void {
     event.stopPropagation();
     if (!this.authService.isLoggedIn()) {
-      this.router.navigate(['/login']);
+      this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
       return;
     }
     this.cartService.addItem({

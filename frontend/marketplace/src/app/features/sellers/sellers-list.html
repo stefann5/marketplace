@@ -1,0 +1,68 @@
+<div class="p-4">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
+    <h2 class="text-2xl font-semibold flex items-center gap-2 m-0">
+      <i class="pi pi-building"></i>
+      All Sellers
+      @if (!loading) {
+        <span class="text-base text-muted font-normal ml-2">({{ filteredSellers.length }})</span>
+      }
+    </h2>
+    <p-iconfield class="w-full md:w-80">
+      <p-inputicon class="pi pi-search" />
+      <input type="text" pInputText placeholder="Search sellers" class="w-full"
+        [(ngModel)]="searchQuery" (input)="applyFilter()" />
+    </p-iconfield>
+  </div>
+
+  @if (loading) {
+    <div class="grid grid-cols-12 gap-4">
+      @for (i of [1,2,3,4,5,6,7,8]; track i) {
+        <div class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
+          <p-skeleton width="100%" height="16rem" />
+        </div>
+      }
+    </div>
+  } @else if (sellers.length === 0) {
+    <div class="flex flex-col items-center justify-center py-16 text-center">
+      <i class="pi pi-building text-6xl text-muted mb-4"></i>
+      <h3 class="text-xl font-semibold mb-2">No sellers available</h3>
+      <p class="text-muted">There are no active sellers at the moment.</p>
+    </div>
+  } @else if (filteredSellers.length === 0) {
+    <div class="flex flex-col items-center justify-center py-16 text-center">
+      <i class="pi pi-search text-6xl text-muted mb-4"></i>
+      <h3 class="text-xl font-semibold mb-2">No sellers match your search</h3>
+      <p class="text-muted">Try a different keyword.</p>
+    </div>
+  } @else {
+    <div class="grid grid-cols-12 gap-4">
+      @for (seller of filteredSellers; track seller.id) {
+        <div class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-3 p-2">
+          <div class="flex flex-col border border-surface-200 bg-surface-0 rounded cursor-pointer hover:shadow-lg hover:border-primary transition-all h-full"
+            (click)="visitShop(seller)">
+            <div class="bg-surface-50 flex justify-center items-center rounded-t p-6">
+              @if (seller.logoUrl && !hasLogoError(seller.id)) {
+                <img [src]="seller.logoUrl" (error)="onLogoError(seller.id)" [alt]="seller.companyName"
+                  class="w-24 h-24 object-cover rounded-full" />
+              } @else {
+                <div class="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
+                  <i class="pi pi-building text-4xl text-primary"></i>
+                </div>
+              }
+            </div>
+            <div class="p-4 flex flex-col flex-auto">
+              <h3 class="font-semibold text-base m-0 truncate">{{ seller.companyName }}</h3>
+              @if (seller.description) {
+                <p class="text-sm text-muted mt-1 mb-0 line-clamp-2">{{ seller.description }}</p>
+              }
+              <div class="mt-auto pt-4">
+                <button pButton label="Visit Shop" icon="pi pi-arrow-right" iconPos="right"
+                  class="w-full" [outlined]="true" (click)="visitShop(seller); $event.stopPropagation()"></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

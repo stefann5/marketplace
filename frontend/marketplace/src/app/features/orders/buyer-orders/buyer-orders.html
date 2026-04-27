@@ -23,11 +23,17 @@
               </div>
               <span class="text-sm text-muted">{{ order.createdAt | date:'medium' }}</span>
             </div>
+            <div class="flex items-center gap-2 mb-3 text-sm">
+              <i class="pi pi-shop text-muted"></i>
+              <span class="text-muted">Seller:</span>
+              <span class="font-medium">{{ getSellerName(order.tenantId) }}</span>
+            </div>
             <div class="flex flex-col gap-2">
               @for (item of order.items; track item.id) {
                 <div class="flex items-center justify-between py-2 border-b border-surface-100 last:border-0">
                   @if (productMap[item.productId]; as product) {
-                    <div class="flex items-center gap-3">
+                    <a [routerLink]="['/products', product.id]"
+                      class="flex items-center gap-3 no-underline text-inherit hover:text-primary transition-colors">
                       @if (product.imageUrls.length) {
                         <img [src]="product.imageUrls[0]" [alt]="product.name"
                           class="w-10 h-10 object-cover rounded" />
@@ -40,9 +46,10 @@
                         <div class="font-medium text-sm">{{ product.name }}</div>
                         <span class="text-sm text-muted">x{{ item.quantity }}</span>
                       </div>
-                    </div>
+                    </a>
                   } @else {
-                    <div class="flex items-center gap-3">
+                    <a [routerLink]="['/products', item.productId]"
+                      class="flex items-center gap-3 no-underline text-inherit hover:text-primary transition-colors">
                       <div class="w-10 h-10 bg-surface-100 rounded flex items-center justify-center">
                         <i class="pi pi-image text-muted"></i>
                       </div>
@@ -50,7 +57,7 @@
                         <span class="text-sm text-muted">{{ item.productId | slice:0:8 }}...</span>
                         <span class="ml-2">x{{ item.quantity }}</span>
                       </div>
-                    </div>
+                    </a>
                   }
                   <span class="font-medium">{{ item.unitPrice * item.quantity | currency:'USD' }}</span>
                 </div>

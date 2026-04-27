@@ -3,9 +3,12 @@
 <div class="flex items-center justify-center min-h-screen bg-ground">
   <p-card class="w-full max-w-[30rem]">
     <ng-template #header>
-      <div class="text-center p-6 pb-0">
-        <h2 class="text-2xl font-bold m-0">Login</h2>
-        <p class="text-muted mt-2">Sign in to your account</p>
+      <div class="p-6 pb-0">
+        <p-button label="Back" icon="pi pi-arrow-left" [text]="true" size="small" (onClick)="goBack()" />
+        <div class="text-center mt-2">
+          <h2 class="text-2xl font-bold m-0">Login</h2>
+          <p class="text-muted mt-2">Sign in to your account</p>
+        </div>
       </div>
     </ng-template>
 
