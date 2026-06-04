@@ -85,7 +85,8 @@ def load_stock_map(catalog_cur):
     return {row[0]: row[1] for row in catalog_cur.fetchall()}
 
 
-def seed_orders(checkouts_per_buyer, max_items_per_cart, fulfilled_ratio, guarantee_min_buyers, seed):
+def seed_orders(checkouts_per_buyer, max_items_per_cart, fulfilled_ratio, guarantee_min_buyers, seed,
+                start_date=None, end_date=None, ignore_existing=False):
     random.seed(seed)
 
     products = load_products()
@@ -107,13 +108,19 @@ def seed_orders(checkouts_per_buyer, max_items_per_cart, fulfilled_ratio, guaran
     products = [p for p in products if p["id"] in stock_map]
     print(f"  {len(products)} of those exist in catalog_db.products")
 
-    already = existing_buyer_ids(order_cur)
-    print(f"  {len(already)} buyers already have orders (will skip)\n")
+    if ignore_existing:
+        already = set()
+        print("  ignore-existing flag set — buyers with prior orders will NOT be skipped\n")
+    else:
+        already = existing_buyer_ids(order_cur)
+        print(f"  {len(already)} buyers already have orders (will skip)\n")
     print(f"Buyers: {BUYER_COUNT}, checkouts/buyer: {checkouts_per_buyer}, "
           f"max items/cart: {max_items_per_cart}, fulfilled: {fulfilled_ratio:.0%}\n")
 
-    start_dt = datetime(2025, 1, 1)
-    end_dt   = datetime(2025, 12, 31, 23, 59, 59)
+    start_dt = datetime.strptime(start_date, "%Y-%m-%d") if start_date else datetime(2025, 1, 1)
+    end_dt = (datetime.strptime(end_date, "%Y-%m-%d").replace(hour=23, minute=59, second=59)
+              if end_date else datetime(2025, 12, 31, 23, 59, 59))
+    print(f"Date range: {start_dt.date()} to {end_dt.date()}\n")
 
     total_checkouts = 0
     total_orders = 0
@@ -399,6 +406,14 @@ if __name__ == "__main__":
                              "unique buyers by adding extra orders. 0 to disable. (default: 10)")
     parser.add_argument("--seed", type=int, default=42,
                         help="Random seed for reproducibility (default: 42)")
+    parser.add_argument("--start-date", type=str, default=None,
+                        help="Override start of order date range (YYYY-MM-DD). Default: 2025-01-01")
+    parser.add_argument("--end-date", type=str, default=None,
+                        help="Override end of order date range (YYYY-MM-DD). Default: 2025-12-31")
+    parser.add_argument("--ignore-existing", action="store_true",
+                        help="Don't skip buyers who already have orders (use with custom date range "
+                             "to add recent orders on top of existing seed data)")
     args = parser.parse_args()
     seed_orders(args.checkouts_per_buyer, args.max_items_per_cart,
-                args.fulfilled_ratio, args.guarantee_min_buyers, args.seed)
+                args.fulfilled_ratio, args.guarantee_min_buyers, args.seed,
+                args.start_date, args.end_date, args.ignore_existing)

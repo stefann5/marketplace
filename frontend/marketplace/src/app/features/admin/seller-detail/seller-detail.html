@@ -98,7 +98,7 @@
                   <p class="font-medium m-0">{{ doc.fileName }}</p>
                   <span class="text-muted text-sm">{{ doc.contentType }}</span>
                 </div>
-                <a [href]="doc.url" target="_blank" class="no-underline">
+                <a [href]="doc.downloadUrl" [download]="doc.fileName" target="_blank" rel="noopener" class="no-underline">
                   <p-button icon="pi pi-download" [rounded]="true" [text]="true" />
                 </a>
               </div>

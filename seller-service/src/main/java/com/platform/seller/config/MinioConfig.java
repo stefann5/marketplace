@@ -18,4 +18,18 @@ public class MinioConfig {
                 .credentials(accessKey, secretKey)
                 .build();
     }
+
+    @Bean
+    public MinioClient minioPresignClient(
+            @Value("${minio.public-url}") String publicUrl,
+            @Value("${minio.endpoint}") String endpoint,
+            @Value("${minio.access-key}") String accessKey,
+            @Value("${minio.secret-key}") String secretKey) {
+        String url = (publicUrl != null && !publicUrl.isBlank()) ? publicUrl : endpoint;
+        return MinioClient.builder()
+                .endpoint(url)
+                .credentials(accessKey, secretKey)
+                .region("us-east-1")
+                .build();
+    }
 }

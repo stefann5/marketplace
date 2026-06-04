@@ -133,8 +133,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
     return !!this.resolveSellerSlug();
   }
 
+  isSeller(): boolean {
+    return this.userRole === 'SELLER';
+  }
+
   goToMarketplace(): void {
     this.router.navigate(['/']);
+  }
+
+  goToDashboard(): void {
+    this.router.navigate(['/dashboard']);
   }
 
   private resolveSellerSlug(): string | undefined {
