@@ -76,16 +76,36 @@ export class SellerOnboardingComponent {
     this.logoPreview = null;
   }
 
-  onDocumentsSelect(event: any): void {
-    this.documents = [...this.documents, ...event.files];
+  onDocumentsChosen(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files) {
+      this.addDocuments(Array.from(input.files));
+    }
   }
 
-  onDocumentRemove(event: any): void {
-    this.documents = this.documents.filter(d => d !== event.file);
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
   }
 
-  onDocumentsClear(): void {
-    this.documents = [];
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    if (event.dataTransfer?.files) {
+      this.addDocuments(Array.from(event.dataTransfer.files));
+    }
+  }
+
+  removeDocument(index: number): void {
+    this.documents = this.documents.filter((_, i) => i !== index);
+  }
+
+  formatSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  private addDocuments(files: File[]): void {
+    this.documents = [...this.documents, ...files];
   }
 
   submit(): void {
@@ -117,7 +137,7 @@ export class SellerOnboardingComponent {
           life: 5000
         });
         setTimeout(() => {
-          this.router.navigate(['/login']);
+          this.router.navigate(['/']);
         }, 2000);
       },
       error: (err: any) => {

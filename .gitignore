@@ -2,3 +2,4 @@
 chat-service/.env
 chat-service/__pycache__/
 chat-service/app/__pycache__/
+rad/*

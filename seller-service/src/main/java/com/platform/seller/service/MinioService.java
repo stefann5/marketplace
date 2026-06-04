@@ -3,7 +3,7 @@ package com.platform.seller.service;
 import io.minio.*;
 import io.minio.http.Method;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,16 +13,23 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Service
-@RequiredArgsConstructor
 public class MinioService {
 
     private final MinioClient minioClient;
+    private final MinioClient minioPresignClient;
 
     @Value("${minio.bucket-name}")
     private String bucketName;
 
     @Value("${minio.public-url}")
     private String publicUrl;
+
+    public MinioService(
+            MinioClient minioClient,
+            @Qualifier("minioPresignClient") MinioClient minioPresignClient) {
+        this.minioClient = minioClient;
+        this.minioPresignClient = minioPresignClient;
+    }
 
     @PostConstruct
     void initBucket() {
@@ -88,7 +95,7 @@ public class MinioService {
 
     public String getPresignedUrl(String objectKey) {
         try {
-            return minioClient.getPresignedObjectUrl(
+            return minioPresignClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.GET)
                             .bucket(bucketName)

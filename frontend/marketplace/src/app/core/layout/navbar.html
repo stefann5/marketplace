@@ -12,16 +12,16 @@
     </p-iconfield>
   </div>
 
-  @if (isInSellerShop()) {
+  @if (isSeller()) {
+    <p-button label="Back to Dashboard" icon="pi pi-arrow-left" [text]="true" (onClick)="goToDashboard()" />
+  } @else if (isInSellerShop()) {
     <p-button label="Back to Marketplace" icon="pi pi-arrow-left" [text]="true" (onClick)="goToMarketplace()" />
   }
 
   <div class="shrink-0">
     @if (loggedIn) {
       <div class="flex items-center gap-2">
-        @if (userRole === 'SELLER') {
-          <p-button label="Dashboard" icon="pi pi-th-large" [text]="true" routerLink="/dashboard/products" />
-        }
+
         @if (userRole === 'ADMIN') {
           <p-button label="Admin" icon="pi pi-shield" [text]="true" routerLink="/admin/sellers" />
         }

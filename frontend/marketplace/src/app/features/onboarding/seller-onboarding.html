@@ -76,17 +76,32 @@
               <div>
                 <label class="block font-semibold mb-2">Business Documents</label>
                 <p class="text-muted text-sm mb-2">Upload business registration, tax certificates, or other relevant documents.</p>
-                <p-fileupload [multiple]="true" [auto]="false" [customUpload]="true"
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" [maxFileSize]="10000000"
-                  (onSelect)="onDocumentsSelect($event)" (onRemove)="onDocumentRemove($event)"
-                  (onClear)="onDocumentsClear()">
-                  <ng-template #empty>
-                    <div class="flex items-center justify-center flex-col py-6">
-                      <i class="pi pi-cloud-upload text-4xl text-muted mb-2"></i>
-                      <p class="text-muted">Drag and drop files here</p>
-                    </div>
-                  </ng-template>
-                </p-fileupload>
+                <input #docInput type="file" multiple
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  (change)="onDocumentsChosen($event); docInput.value = ''" hidden />
+                <div class="border-2 border-dashed border-surface-300 rounded p-6 text-center cursor-pointer hover:border-primary transition-colors"
+                  (click)="docInput.click()"
+                  (dragover)="onDragOver($event)"
+                  (drop)="onDrop($event); docInput.value = ''">
+                  <i class="pi pi-cloud-upload text-4xl text-muted mb-2"></i>
+                  <p class="text-muted m-0">Click or drag files here to add</p>
+                </div>
+
+                @if (documents.length > 0) {
+                  <div class="flex flex-col gap-2 mt-3">
+                    @for (doc of documents; track $index) {
+                      <div class="flex items-center justify-between gap-3 p-3 bg-surface-50 rounded">
+                        <div class="flex items-center gap-2 min-w-0">
+                          <i class="pi pi-file text-primary"></i>
+                          <span class="truncate">{{ doc.name }}</span>
+                          <span class="text-muted text-sm shrink-0">({{ formatSize(doc.size) }})</span>
+                        </div>
+                        <p-button icon="pi pi-times" [rounded]="true" [text]="true" severity="danger"
+                          (onClick)="removeDocument($index)" />
+                      </div>
+                    }
+                  </div>
+                }
               </div>
             </div>
 

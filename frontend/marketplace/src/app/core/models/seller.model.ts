@@ -19,7 +19,7 @@ export interface SellerProfile {
 export interface SellerDocument {
   id: string;
   fileName: string;
-  url: string;
+  downloadUrl: string;
   contentType: string;
   uploadedAt: string;
 }
